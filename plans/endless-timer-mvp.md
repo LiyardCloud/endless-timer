@@ -50,7 +50,7 @@
 - [ ] Switching actions updates the current state immediately
 - [ ] Clicking the same action again creates a new history event with the latest title
 - [ ] Each action switch writes a correctly structured history event
-- [ ] Timer continues running while titles and actions change
+- [-] Timer continues running while titles and actions change
 
 ---
 

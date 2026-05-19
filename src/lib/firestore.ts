@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -39,10 +40,10 @@ export function historyRef(userId: string) {
 
 export async function bootstrapUser(user: User) {
   const userDoc = userRef(user.uid);
+  const existingUser = await getDoc(userDoc);
 
-  await setDoc(
-    userDoc,
-    {
+  if (!existingUser.exists()) {
+    await setDoc(userDoc, {
       displayName: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
@@ -54,9 +55,19 @@ export async function bootstrapUser(user: User) {
       currentActionColor: null,
       currentActionIcon: null,
       currentStartedAt: null
-    },
-    { merge: true }
-  );
+    });
+  } else {
+    await setDoc(
+      userDoc,
+      {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+  }
 
   const existingActions = await getDocs(query(actionsRef(user.uid), limit(1)));
 
@@ -119,7 +130,7 @@ export async function selectAction(params: {
   });
 
   await updateDoc(userRef(userId), {
-    currentTitle: title,
+    currentTitle: "",
     currentActionId: action.id,
     currentActionName: action.name,
     currentActionColor: action.color,

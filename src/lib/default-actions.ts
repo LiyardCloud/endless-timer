@@ -1,8 +1,8 @@
 export const DEFAULT_ACTIONS = [
-  { name: "Focus", color: "#265cff", icon: "◉" },
-  { name: "Break", color: "#e68139", icon: "◌" },
-  { name: "Admin", color: "#17825d", icon: "△" },
-  { name: "Meeting", color: "#7a4bff", icon: "□" }
+  { name: "Focus", color: "#265cff", icon: "brain" },
+  { name: "Break", color: "#e68139", icon: "coffee" },
+  { name: "Admin", color: "#17825d", icon: "briefcase" },
+  { name: "Meeting", color: "#7a4bff", icon: "users" }
 ] as const;
 
 export const ACTION_COLORS = [
@@ -15,5 +15,3 @@ export const ACTION_COLORS = [
   "#5e5e5e",
   "#111111"
 ];
-
-export const ACTION_ICONS = ["◉", "◌", "△", "□", "✦", "✳", "▣", "⬢"];
