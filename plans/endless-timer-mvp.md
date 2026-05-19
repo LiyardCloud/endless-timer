@@ -59,7 +59,7 @@
 - [x] Build the vertical timeline from `history_events`
 - [x] Render action colors and icons clearly in the history view
 - [x] Handle empty states, loading states, and basic error states for the single-page flow
-- [x] Apply the minimal Vercel/shadcn/Notion-like visual pass while keeping action colors as the main vivid element
+- [-] Apply the minimal Vercel/shadcn/Notion-like visual pass while keeping action colors as the main vivid element
 - [ ] Smoke test the complete MVP flow in production configuration
 
 ### Verify
