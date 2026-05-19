@@ -105,6 +105,10 @@ export async function removeAction(userId: string, actionId: string) {
   await deleteDoc(doc(actionsRef(userId), actionId));
 }
 
+export async function removeHistoryEvent(userId: string, eventId: string) {
+  await deleteDoc(doc(historyRef(userId), eventId));
+}
+
 export async function saveCurrentTitle(userId: string, title: string) {
   await updateDoc(userRef(userId), {
     currentTitle: title,
@@ -142,6 +146,10 @@ export async function selectAction(params: {
 
 export function latestHistoryQuery(userId: string) {
   return query(historyRef(userId), orderBy("startedAt", "desc"), limit(50));
+}
+
+export function historyQuery(userId: string) {
+  return query(historyRef(userId), orderBy("startedAt", "desc"));
 }
 
 export function actionsQuery(userId: string) {
