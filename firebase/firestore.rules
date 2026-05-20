@@ -10,6 +10,19 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function isValidHistoryUpdate(userId) {
+      return request.resource.data.userId == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "actionId",
+          "actionName",
+          "actionColor",
+          "actionIcon",
+          "titleSnapshot",
+          "startedAt",
+          "updatedAt"
+        ]);
+    }
+
     match /users/{userId} {
       allow read, update, create: if isOwner(userId);
       allow delete: if false;
@@ -20,7 +33,7 @@ service cloud.firestore {
 
       match /history_events/{eventId} {
         allow read, create: if isOwner(userId);
-        allow update: if false;
+        allow update: if isOwner(userId) && isValidHistoryUpdate(userId);
         allow delete: if isOwner(userId);
       }
     }

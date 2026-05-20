@@ -71,3 +71,76 @@
 [info] ✔  Deploy complete! 
 [info] 
 [info] Project Console: https://console.firebase.google.com/project/endlesstimer-b1f71/overview
+[debug] [2026-05-20T10:16:31.566Z] ----------------------------------------------------------------------
+[debug] [2026-05-20T10:16:31.568Z] Command:       /Users/wirbel/.nvm/versions/node/v20.19.0/bin/node /Users/wirbel/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase deploy --only firestore:rules --project endlesstimer-b1f71
+[debug] [2026-05-20T10:16:31.568Z] CLI Version:   15.18.0
+[debug] [2026-05-20T10:16:31.568Z] Platform:      darwin
+[debug] [2026-05-20T10:16:31.569Z] Node Version:  v20.19.0
+[debug] [2026-05-20T10:16:31.569Z] Time:          Wed May 20 2026 13:16:31 GMT+0300 (Eastern European Summer Time)
+[debug] [2026-05-20T10:16:31.569Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-20T10:16:32.507Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-20T10:16:32.507Z] > authorizing via signed-in user (mckinley55x@gmail.com)
+[debug] [2026-05-20T10:16:32.507Z] [iam] checking project endlesstimer-b1f71 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-05-20T10:16:32.508Z] Checked if tokens are valid: false, expires at: 1779224762956
+[debug] [2026-05-20T10:16:32.508Z] Checked if tokens are valid: false, expires at: 1779224762956
+[debug] [2026-05-20T10:16:32.509Z] > refreshing access token with scopes: []
+[debug] [2026-05-20T10:16:32.509Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-05-20T10:16:32.510Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-05-20T10:16:32.758Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-05-20T10:16:32.758Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-05-20T10:16:32.776Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/endlesstimer-b1f71:testIamPermissions [none]
+[debug] [2026-05-20T10:16:32.777Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/endlesstimer-b1f71:testIamPermissions  x-goog-user-project=endlesstimer-b1f71
+[debug] [2026-05-20T10:16:32.777Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/endlesstimer-b1f71:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-05-20T10:16:33.592Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/endlesstimer-b1f71:testIamPermissions 200
+[debug] [2026-05-20T10:16:33.592Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/endlesstimer-b1f71:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'endlesstimer-b1f71'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-05-20T10:16:33.596Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:33.596Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:33.596Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/endlesstimer-b1f71/databases/(default) [none]
+[debug] [2026-05-20T10:16:33.823Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/endlesstimer-b1f71/databases/(default) 200
+[debug] [2026-05-20T10:16:33.824Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/endlesstimer-b1f71/databases/(default) {"name":"projects/endlesstimer-b1f71/databases/(default)","uid":"a15a8815-4882-4182-a9ba-bfeb04e97e6d","createTime":"2026-05-19T14:22:15.194065Z","updateTime":"2026-05-19T14:22:15.194065Z","locationId":"europe-central2","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-05-20T09:16:33.818146Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"zlm","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IN74yLjRx5QDMN7g6JTIxZQD"}
+[info] i  cloud.firestore: checking firebase/firestore.rules for compilation errors... 
+[debug] [2026-05-20T10:16:33.826Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:33.826Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:33.827Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71:test [none]
+[debug] [2026-05-20T10:16:33.827Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71:test [omitted]
+[debug] [2026-05-20T10:16:34.436Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71:test 200
+[debug] [2026-05-20T10:16:34.437Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71:test {}
+[info] ✔  cloud.firestore: rules file firebase/firestore.rules compiled successfully 
+[debug] [2026-05-20T10:16:34.440Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:34.440Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:34.441Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases pageSize=10&pageToken=
+[debug] [2026-05-20T10:16:35.200Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases 200
+[debug] [2026-05-20T10:16:35.201Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases {"releases":[{"name":"projects/endlesstimer-b1f71/releases/cloud.firestore","rulesetName":"projects/endlesstimer-b1f71/rulesets/5e41e271-40aa-40e1-a294-791215c0d44f","createTime":"2026-05-19T14:22:18.087494Z","updateTime":"2026-05-19T20:06:09.038354Z"}]}
+[debug] [2026-05-20T10:16:35.202Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:35.202Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:35.202Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets/5e41e271-40aa-40e1-a294-791215c0d44f [none]
+[debug] [2026-05-20T10:16:35.910Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets/5e41e271-40aa-40e1-a294-791215c0d44f 200
+[debug] [2026-05-20T10:16:35.910Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets/5e41e271-40aa-40e1-a294-791215c0d44f [omitted]
+[info] i  firestore: uploading rules firebase/firestore.rules... 
+[debug] [2026-05-20T10:16:35.913Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:35.913Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:35.914Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets [none]
+[debug] [2026-05-20T10:16:35.914Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets [omitted]
+[debug] [2026-05-20T10:16:36.802Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets 200
+[debug] [2026-05-20T10:16:36.803Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/rulesets {"name":"projects/endlesstimer-b1f71/rulesets/b4fe65eb-74ea-4c13-b1b0-379a35b4895e","source":{"files":[{"content":"rules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function signedIn() {\n      return request.auth != null;\n    }\n\n    function isOwner(userId) {\n      return signedIn() && request.auth.uid == userId;\n    }\n\n    function isValidHistoryUpdate(userId) {\n      return request.resource.data.userId == userId\n        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([\n          \"actionId\",\n          \"actionName\",\n          \"actionColor\",\n          \"actionIcon\",\n          \"titleSnapshot\",\n          \"startedAt\",\n          \"updatedAt\"\n        ]);\n    }\n\n    match /users/{userId} {\n      allow read, update, create: if isOwner(userId);\n      allow delete: if false;\n\n      match /actions/{actionId} {\n        allow read, create, update, delete: if isOwner(userId);\n      }\n\n      match /history_events/{eventId} {\n        allow read, create: if isOwner(userId);\n        allow update: if isOwner(userId) && isValidHistoryUpdate(userId);\n        allow delete: if isOwner(userId);\n      }\n    }\n  }\n}\n","name":"firebase/firestore.rules"}]},"createTime":"2026-05-20T10:16:36.692287Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-05-20T10:16:36.803Z] [rules] created ruleset projects/endlesstimer-b1f71/rulesets/b4fe65eb-74ea-4c13-b1b0-379a35b4895e
+[debug] [2026-05-20T10:16:36.804Z] [rules] releasing cloud.firestore with ruleset projects/endlesstimer-b1f71/rulesets/b4fe65eb-74ea-4c13-b1b0-379a35b4895e
+[debug] [2026-05-20T10:16:36.804Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:36.805Z] Checked if tokens are valid: true, expires at: 1779275791758
+[debug] [2026-05-20T10:16:36.805Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases/cloud.firestore [none]
+[debug] [2026-05-20T10:16:36.806Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases/cloud.firestore {"release":{"name":"projects/endlesstimer-b1f71/releases/cloud.firestore","rulesetName":"projects/endlesstimer-b1f71/rulesets/b4fe65eb-74ea-4c13-b1b0-379a35b4895e"}}
+[debug] [2026-05-20T10:16:37.333Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases/cloud.firestore 200
+[debug] [2026-05-20T10:16:37.333Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/endlesstimer-b1f71/releases/cloud.firestore {"name":"projects/endlesstimer-b1f71/releases/cloud.firestore","rulesetName":"projects/endlesstimer-b1f71/rulesets/b4fe65eb-74ea-4c13-b1b0-379a35b4895e","createTime":"2026-05-19T14:22:18.087494Z","updateTime":"2026-05-20T10:16:37.229563Z"}
+[debug] [2026-05-20T10:16:37.334Z] [rules] updated release projects/endlesstimer-b1f71/releases/cloud.firestore
+[info] ✔  firestore: released rules firebase/firestore.rules to cloud.firestore 
+[info] 
+[info] ✔  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/endlesstimer-b1f71/overview

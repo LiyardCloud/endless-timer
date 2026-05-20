@@ -35,4 +35,5 @@ export type HistoryEvent = {
   titleSnapshot: string;
   userId: string;
   startedAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
 };

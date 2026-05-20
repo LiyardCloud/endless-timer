@@ -109,6 +109,24 @@ export async function removeHistoryEvent(userId: string, eventId: string) {
   await deleteDoc(doc(historyRef(userId), eventId));
 }
 
+export async function updateHistoryEvent(
+  userId: string,
+  eventId: string,
+  event: {
+    actionId: string;
+    actionName: string;
+    actionColor: string;
+    actionIcon: string;
+    titleSnapshot: string;
+    startedAt: Date;
+  }
+) {
+  await updateDoc(doc(historyRef(userId), eventId), {
+    ...event,
+    updatedAt: serverTimestamp()
+  });
+}
+
 export async function saveCurrentTitle(userId: string, title: string) {
   await updateDoc(userRef(userId), {
     currentTitle: title,

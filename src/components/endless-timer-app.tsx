@@ -47,6 +47,7 @@ import {
   removeHistoryEvent,
   saveCurrentTitle,
   selectAction,
+  updateHistoryEvent,
   updateAction
 } from "@/lib/firestore";
 import { getActionIcon, normalizeActionIconName } from "@/lib/action-icons";
@@ -85,6 +86,12 @@ type ActionDraft = {
   icon: string;
 };
 
+type HistoryEditDraft = {
+  actionId: string;
+  titleSnapshot: string;
+  startedAt: string;
+};
+
 type AnalyticsRange = {
   preset: AnalyticsPreset;
   from: string;
@@ -96,6 +103,12 @@ const emptyDraft: ActionDraft = {
   name: "",
   color: ACTION_COLORS[0],
   icon: "brain"
+};
+
+const emptyHistoryEditDraft: HistoryEditDraft = {
+  actionId: "",
+  titleSnapshot: "",
+  startedAt: ""
 };
 
 const navItems: Array<{ page: AppPage; href: string; label: string; icon: typeof House }> = [
@@ -129,7 +142,8 @@ function mapHistory(docSnapshot: QueryDocumentSnapshot<DocumentData>): HistoryEv
     actionIcon: normalizeActionIconName(data.actionIcon ?? "brain"),
     titleSnapshot: data.titleSnapshot ?? "",
     userId: data.userId,
-    startedAt: data.startedAt ?? null
+    startedAt: data.startedAt ?? null,
+    updatedAt: data.updatedAt ?? null
   };
 }
 
@@ -184,6 +198,46 @@ function formatSegmentDuration(startMs: number, endMs: number) {
   return `${hours}:${minutes}:${seconds}`;
 }
 
+function formatDateTimeLocalValue(value: number | Date) {
+  const date = typeof value === "number" ? new Date(value) : value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function parseDateTimeLocalValue(value: string) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function getHistoryNeighbors(history: HistoryEvent[], eventId: string) {
+  const sorted = [...history]
+    .filter((event) => event.startedAt)
+    .sort((left, right) => left.startedAt!.toDate().getTime() - right.startedAt!.toDate().getTime());
+  const index = sorted.findIndex((event) => event.id === eventId);
+
+  if (index === -1) {
+    return {
+      previousEvent: null,
+      nextEvent: null
+    };
+  }
+
+  return {
+    previousEvent: sorted[index - 1] ?? null,
+    nextEvent: sorted[index + 1] ?? null
+  };
+}
+
 function pageDescription(page: AppPage) {
   switch (page) {
     case "home":
@@ -212,6 +266,8 @@ function useEndlessTimerState() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionDeleteTarget, setActionDeleteTarget] = useState<ActionItem | null>(null);
   const [historyDeleteTarget, setHistoryDeleteTarget] = useState<HistoryEvent | null>(null);
+  const [historyEditTarget, setHistoryEditTarget] = useState<HistoryEvent | null>(null);
+  const [historyEditDraft, setHistoryEditDraft] = useState<HistoryEditDraft>(emptyHistoryEditDraft);
   const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hydratedTitleRef = useRef(false);
 
@@ -231,6 +287,8 @@ function useEndlessTimerState() {
         setHistory([]);
         setCurrentState(emptyCurrentState);
         setTitleDraft("");
+        setHistoryEditTarget(null);
+        setHistoryEditDraft(emptyHistoryEditDraft);
         hydratedTitleRef.current = false;
         return;
       }
@@ -462,6 +520,105 @@ function useEndlessTimerState() {
     setHistoryDeleteTarget(event);
   }
 
+  function requestEditHistoryEvent(event: HistoryEvent) {
+    const currentStartedAtMs = currentState.currentStartedAt?.toDate().getTime();
+    const eventStartedAtMs = event.startedAt?.toDate().getTime();
+
+    if (!eventStartedAtMs) {
+      setErrorMessage("This timer entry is missing a start time and cannot be edited.");
+      return;
+    }
+
+    if (currentStartedAtMs && currentStartedAtMs === eventStartedAtMs) {
+      setErrorMessage("Switch to another action before editing the active timer entry.");
+      return;
+    }
+
+    setHistoryEditTarget(event);
+    setHistoryEditDraft({
+      actionId: event.actionId,
+      titleSnapshot: event.titleSnapshot,
+      startedAt: formatDateTimeLocalValue(event.startedAt!.toDate())
+    });
+  }
+
+  function cancelHistoryEdit() {
+    setHistoryEditTarget(null);
+    setHistoryEditDraft(emptyHistoryEditDraft);
+  }
+
+  async function submitHistoryEdit() {
+    if (!user || !historyEditTarget) {
+      return;
+    }
+
+    const currentStartedAtMs = currentState.currentStartedAt?.toDate().getTime();
+    const targetStartedAtMs = historyEditTarget.startedAt?.toDate().getTime();
+
+    if (currentStartedAtMs && targetStartedAtMs && currentStartedAtMs === targetStartedAtMs) {
+      setErrorMessage("The active timer entry cannot be edited right now.");
+      return;
+    }
+
+    const parsedStartedAt = parseDateTimeLocalValue(historyEditDraft.startedAt);
+
+    if (!parsedStartedAt) {
+      setErrorMessage("Choose a valid start date and time.");
+      return;
+    }
+
+    const { previousEvent, nextEvent } = getHistoryNeighbors(history, historyEditTarget.id);
+    const editedStartedAtMs = parsedStartedAt.getTime();
+    const previousStartedAtMs = previousEvent?.startedAt?.toDate().getTime();
+    const nextStartedAtMs = nextEvent?.startedAt?.toDate().getTime();
+
+    if (previousStartedAtMs && editedStartedAtMs <= previousStartedAtMs) {
+      setErrorMessage("Move this entry after the previous timer entry to keep the timeline in order.");
+      return;
+    }
+
+    if (nextStartedAtMs && editedStartedAtMs >= nextStartedAtMs) {
+      setErrorMessage("Move this entry before the next timer entry to keep the timeline in order.");
+      return;
+    }
+
+    const selectedAction = actions.find((action) => action.id === historyEditDraft.actionId);
+    const fallbackAction =
+      historyEditDraft.actionId === historyEditTarget.actionId
+        ? {
+            id: historyEditTarget.actionId,
+            name: historyEditTarget.actionName,
+            color: historyEditTarget.actionColor,
+            icon: historyEditTarget.actionIcon
+          }
+        : null;
+    const resolvedAction = selectedAction ?? fallbackAction;
+
+    if (!resolvedAction) {
+      setErrorMessage("Pick a valid action before saving this timer entry.");
+      return;
+    }
+
+    try {
+      setBusy(`update-history-${historyEditTarget.id}`);
+      await updateHistoryEvent(user.uid, historyEditTarget.id, {
+        actionId: resolvedAction.id,
+        actionName: resolvedAction.name,
+        actionColor: resolvedAction.color,
+        actionIcon: resolvedAction.icon,
+        titleSnapshot: historyEditDraft.titleSnapshot.trim(),
+        startedAt: parsedStartedAt
+      });
+      setErrorMessage(null);
+      cancelHistoryEdit();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update timer entry.";
+      setErrorMessage(message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function confirmDeleteHistoryEvent() {
     if (!user || !historyDeleteTarget) {
       return;
@@ -528,6 +685,8 @@ function useEndlessTimerState() {
     errorMessage,
     actionDeleteTarget,
     historyDeleteTarget,
+    historyEditTarget,
+    historyEditDraft,
     showActionForm: actionMode === "create" || editingActionId !== null,
     interactionHint:
       actionMode === "change"
@@ -546,8 +705,12 @@ function useEndlessTimerState() {
     confirmDeleteAction,
     requestDeleteHistoryEvent,
     confirmDeleteHistoryEvent,
+    requestEditHistoryEvent,
+    cancelHistoryEdit,
+    submitHistoryEdit,
     setActionDeleteTarget,
-    setHistoryDeleteTarget
+    setHistoryDeleteTarget,
+    setHistoryEditDraft
   };
 }
 
@@ -970,20 +1133,46 @@ function HomeView(state: ReturnType<typeof useEndlessTimerState>) {
 
 function TimelineView({
   history,
+  actions,
   currentState,
   clockNow,
   busy,
-  onRequestDeleteHistoryEvent
+  historyEditTarget,
+  historyEditDraft,
+  onHistoryEditDraftChange,
+  onRequestDeleteHistoryEvent,
+  onRequestEditHistoryEvent,
+  onCancelHistoryEdit,
+  onSubmitHistoryEdit
 }: {
   history: HistoryEvent[];
+  actions: ActionItem[];
   currentState: CurrentState;
   clockNow: number;
   busy: string | null;
+  historyEditTarget: HistoryEvent | null;
+  historyEditDraft: HistoryEditDraft;
+  onHistoryEditDraftChange: (draft: HistoryEditDraft) => void;
   onRequestDeleteHistoryEvent: (event: HistoryEvent) => void;
+  onRequestEditHistoryEvent: (event: HistoryEvent) => void;
+  onCancelHistoryEdit: () => void;
+  onSubmitHistoryEdit: () => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(getTodayKey);
   const segments = buildActivitySegments(history, currentState, clockNow);
   const dailySegments = segments.filter((segment) => formatInputDate(segment.startMs) === selectedDate);
+  const editActionOptions =
+    historyEditTarget && !actions.some((action) => action.id === historyEditTarget.actionId)
+      ? [
+          {
+            id: historyEditTarget.actionId,
+            name: `${historyEditTarget.actionName} (archived)`,
+            color: historyEditTarget.actionColor,
+            icon: historyEditTarget.actionIcon
+          },
+          ...actions
+        ]
+      : actions;
 
   return (
     <div className="space-y-4">
@@ -1018,6 +1207,79 @@ function TimelineView({
         </CardHeader>
       </Surface>
 
+      {historyEditTarget ? (
+        <Surface className="p-4 sm:p-5">
+          <CardHeader className="mb-4 gap-1 p-0">
+            <CardTitle className="text-base">Edit timer entry</CardTitle>
+            <CardDescription>
+              Adjust the snapped action, title, or start time without changing how new entries are created.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 p-0">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Action">
+                <select
+                  className="flex h-12 w-full rounded-2xl border border-border bg-white/5 px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-border-strong focus:bg-white/7 focus:ring-4 focus:ring-ring/40"
+                  value={historyEditDraft.actionId}
+                  onChange={(event) =>
+                    onHistoryEditDraftChange({
+                      ...historyEditDraft,
+                      actionId: event.target.value
+                    })
+                  }
+                >
+                  {editActionOptions.map((action) => (
+                    <option key={action.id} value={action.id} className="bg-[#0b1020] text-white">
+                      {action.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Started at">
+                <Input
+                  type="datetime-local"
+                  value={historyEditDraft.startedAt}
+                  onChange={(event) =>
+                    onHistoryEditDraftChange({
+                      ...historyEditDraft,
+                      startedAt: event.target.value
+                    })
+                  }
+                />
+              </Field>
+            </div>
+            <Field label="Title">
+              <textarea
+                className="min-h-28 w-full rounded-[22px] border border-border bg-white/5 px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-border-strong focus:bg-white/7 focus:ring-4 focus:ring-ring/40"
+                value={historyEditDraft.titleSnapshot}
+                onChange={(event) =>
+                  onHistoryEditDraftChange({
+                    ...historyEditDraft,
+                    titleSnapshot: event.target.value
+                  })
+                }
+                placeholder="What were you doing?"
+              />
+            </Field>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                disabled={busy === `update-history-${historyEditTarget.id}`}
+                onClick={() => void onSubmitHistoryEdit()}
+              >
+                Save entry
+              </Button>
+              <Button
+                variant="outline"
+                disabled={busy === `update-history-${historyEditTarget.id}`}
+                onClick={onCancelHistoryEdit}
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Surface>
+      ) : null}
+
       <Surface className="p-4 sm:p-5">
         <CardHeader className="mb-4 gap-1 p-0">
           <CardTitle className="text-base">Timer entries</CardTitle>
@@ -1033,6 +1295,7 @@ function TimelineView({
                   !!currentState.currentStartedAt &&
                   !!segment.startedAt &&
                   currentState.currentStartedAt.toDate().getTime() === segment.startedAt.toDate().getTime();
+                const isEditingEntry = historyEditTarget?.id === segment.id;
 
                 return (
                   <div className={cn("grid grid-cols-[12px_1fr] gap-3", compact && "items-center")} key={segment.id}>
@@ -1046,7 +1309,13 @@ function TimelineView({
                         aria-hidden="true"
                       />
                     </div>
-                    <div className={cn("rounded-[16px] border border-white/5 bg-white/[0.018] px-3.5 py-3", compact && "py-2.5")}>
+                    <div
+                      className={cn(
+                        "rounded-[16px] border border-white/5 bg-white/[0.018] px-3.5 py-3",
+                        compact && "py-2.5",
+                        isEditingEntry && "border-primary/35 bg-primary/[0.06]"
+                      )}
+                    >
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div>
                           <strong className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -1069,8 +1338,22 @@ function TimelineView({
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-8 px-2 text-muted hover:text-white"
+                            disabled={isActiveEntry || busy === `update-history-${segment.id}`}
+                            onClick={() => onRequestEditHistoryEvent(segment)}
+                          >
+                            <Pencil size={14} />
+                            <span className="sr-only">Edit timer entry</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-8 px-2 text-muted hover:text-destructive"
-                            disabled={isActiveEntry || busy === `delete-history-${segment.id}`}
+                            disabled={
+                              isActiveEntry ||
+                              busy === `delete-history-${segment.id}` ||
+                              busy === `update-history-${segment.id}`
+                            }
                             onClick={() => onRequestDeleteHistoryEvent(segment)}
                           >
                             <Trash2 size={14} />
@@ -1411,10 +1694,17 @@ function AppContent({ page }: { page: AppPage }) {
               {page === "timeline" ? (
                 <TimelineView
                   history={state.history}
+                  actions={state.actions}
                   currentState={state.currentState}
                   clockNow={state.clockNow}
                   busy={state.busy}
+                  historyEditTarget={state.historyEditTarget}
+                  historyEditDraft={state.historyEditDraft}
+                  onHistoryEditDraftChange={state.setHistoryEditDraft}
                   onRequestDeleteHistoryEvent={state.requestDeleteHistoryEvent}
+                  onRequestEditHistoryEvent={state.requestEditHistoryEvent}
+                  onCancelHistoryEdit={state.cancelHistoryEdit}
+                  onSubmitHistoryEdit={state.submitHistoryEdit}
                 />
               ) : null}
               {page === "analytics" ? (
