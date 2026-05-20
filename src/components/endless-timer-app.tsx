@@ -15,6 +15,7 @@ import {
   Clock3,
   House,
   LogOut,
+  Download,
   Pencil,
   Plus,
   Rows3,
@@ -65,6 +66,7 @@ import {
 import { formatDuration } from "@/lib/format";
 import type { ActionItem, CurrentState, HistoryEvent, UserRecord } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { usePwaInstall } from "@/components/pwa-provider";
 
 const emptyCurrentState: CurrentState = {
   currentTitle: "",
@@ -1554,6 +1556,8 @@ function ProfileView({
   onSignOut: () => void;
   busy: string | null;
 }) {
+  const { canInstall, isInstalled, isIos, installApp } = usePwaInstall();
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <Surface className="p-4 sm:p-5">
@@ -1617,6 +1621,29 @@ function ProfileView({
                 <p className="mt-1 text-sm leading-6 text-muted">
                   Authentication stays Google-only, matching the current MVP product rules.
                 </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="flex items-start gap-3">
+              <Download className="mt-0.5 size-4 text-muted" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white">Install app</p>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {isInstalled
+                    ? "EndlessTimer is already installed on this device."
+                    : canInstall
+                      ? "Add EndlessTimer to your home screen for quicker access and a standalone app feel."
+                      : isIos
+                        ? "On iPhone or iPad, use Share and then Add to Home Screen to install this app."
+                        : "The install button appears once your browser says this page is eligible for app install."}
+                </p>
+                {canInstall ? (
+                  <Button className="mt-3" onClick={() => void installApp()}>
+                    <Download size={15} />
+                    Install app
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>

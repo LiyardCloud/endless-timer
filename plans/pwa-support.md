@@ -28,7 +28,7 @@
 
 ### Verify
 - [x] Static assets and core routes are available after first load
-- [x] Offline navigation shows a graceful fallback instead of a browser error
+- [x] Offline navigation falls back to cached app shell instead of a browser error
 - [x] Live Firestore data is not incorrectly cached as stale API responses
 
 ---
