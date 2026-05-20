@@ -1,9 +1,30 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+
+import { PwaProvider } from "@/components/pwa-provider";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "EndlessTimer",
-  description: "A minimalist endless activity timer."
+  description: "A minimalist endless activity timer.",
+  manifest: "/manifest.webmanifest",
+  applicationName: "EndlessTimer",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "EndlessTimer"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  icons: {
+    apple: "/apple-icon"
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#090c14",
+  viewportFit: "cover"
 };
 
 export default function RootLayout({
@@ -13,7 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <PwaProvider />
+        {children}
+      </body>
     </html>
   );
 }
