@@ -2,11 +2,14 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+type CardProps = React.ComponentProps<"div"> & { noShadow?: boolean };
+
+function Card({ className, noShadow, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-[1.6rem] border border-border bg-card text-card-foreground shadow-panel",
+        "rounded-[1.6rem] border border-border bg-card text-card-foreground",
+        !noShadow && "shadow-panel",
         className
       )}
       {...props}

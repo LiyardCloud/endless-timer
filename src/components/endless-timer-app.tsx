@@ -183,7 +183,8 @@ function Surface({
 }) {
   return (
     <Card
-      className={cn("overflow-hidden rounded-[22px] border-white/8 bg-white/[0.035] shadow-none", className)}
+      noShadow
+      className={cn("overflow-hidden rounded-[22px] border-white/8 bg-white/[0.035]", className)}
       style={style}
     >
       {children}
