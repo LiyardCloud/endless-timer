@@ -66,3 +66,70 @@
 - [x] `npm run build` passes
 
 ---
+
+## ✅ Phase 5: Timeline Header Compact Polish
+
+- [x] Replace the oversized Timeline day selector panel with the selected compact glass design
+- [x] Verify responsive behavior and production build/lint checks
+
+### Verify
+- [x] Timeline date picker and previous/next day controls still update the selected day
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+
+---
+
+## ✅ Phase 6: Analytics Control Panel Compact Polish
+
+- [x] Replace the oversized Analytics control panel with selected Variant 1
+- [x] Verify preset, date range, and activity filter controls
+
+### Verify
+- [x] Analytics preset buttons update the range
+- [x] Date inputs switch the range to custom
+- [x] Activity filter still updates visible analytics rows
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+
+---
+
+## ✅ Phase 7: Analytics Control Panel Text Reduction
+
+- [x] Remove visible Analytics header text from the compact control panel
+- [x] Replace quick range buttons with a dropdown menu
+
+### Verify
+- [x] Range dropdown updates the selected preset and dates
+- [x] Date inputs still switch the range to custom
+- [x] Activity filter still updates visible analytics rows
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+
+---
+
+## ✅ Phase 8: Timeline Control Panel Text And Date Input Cleanup
+
+- [x] Remove visible Timeline eyebrow text from the compact panel
+- [x] Hide duplicate secondary date text when the heading already names the selected day
+- [x] Replace the native visible date input with a single-icon clickable date pill
+
+### Verify
+- [x] Timeline date picker still opens from the date pill
+- [x] Previous/next buttons still update the selected day
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+
+---
+
+## ✅ Phase 9: Analytics Date Input Click Target Cleanup
+
+- [x] Convert Analytics date controls to full-click date pills
+
+### Verify
+- [x] From date picker opens from the whole field
+- [x] To date picker opens from the whole field
+- [x] Date changes still switch the range to custom
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+
+---

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline Glass Panel Variants V2</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Avenir Next', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            mono: ['SF Mono', 'Monaco', 'Cascadia Code', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-[radial-gradient(circle_at_12%_8%,rgba(38,92,255,0.18),transparent_28%),radial-gradient(circle_at_86%_18%,rgba(230,129,57,0.12),transparent_24%),linear-gradient(180deg,#0c1019,#06070d)] p-4 text-[#eef3ff] sm:p-8">
+  <div class="mx-auto max-w-7xl">
+    <h1 class="mb-2 text-2xl font-semibold">Timeline Panel - 8 Glass Refinements</h1>
+    <p class="mb-8 max-w-2xl text-sm text-[#9aa3b7]">All options are based on the previous Variant 3: compact glass surface, soft blur, date chip, and inline day controls.</p>
+    <div id="root"></div>
+  </div>
+
+  <script type="text/babel">
+    const longDate = "May 21, 2026";
+
+    const ArrowLeftIcon = () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+        <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
+      </svg>
+    );
+
+    const ArrowRightIcon = () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+        <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+      </svg>
+    );
+
+    const CalendarIcon = () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+        <path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" />
+      </svg>
+    );
+
+    function ArrowButton({ direction }) {
+      return (
+        <button className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]" aria-label={direction === "left" ? "Previous day" : "Next day"}>
+          {direction === "left" ? <ArrowLeftIcon /> : <ArrowRightIcon />}
+        </button>
+      );
+    }
+
+    function DateInput({ className = "" }) {
+      return (
+        <label className={`flex h-9 min-w-0 items-center gap-2 rounded-full border border-white/15 bg-black/20 px-3 text-sm text-white ${className}`}>
+          <CalendarIcon />
+          <input type="date" defaultValue="2026-05-21" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none [color-scheme:dark]" />
+        </label>
+      );
+    }
+
+    function Shell({ children, className = "" }) {
+      return (
+        <div className={`rounded-[22px] bg-[radial-gradient(circle_at_15%_10%,rgba(38,92,255,0.34),transparent_30%),radial-gradient(circle_at_82%_20%,rgba(230,129,57,0.2),transparent_26%),linear-gradient(135deg,#121826,#070910)] p-px ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Variant1() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3.5 py-3 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="hidden h-10 w-px rounded-full bg-white/20 sm:block" />
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/55">Timeline</div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-white">Today</h2>
+                    <span className="rounded-full border border-white/15 bg-white/[0.08] px-2.5 py-1 text-xs text-white/70">{longDate}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowButton direction="left" />
+                <DateInput className="flex-1 md:w-[160px]" />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant2() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/14 bg-white/[0.075] px-3 py-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.32)] backdrop-blur-xl">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/50">Timeline</span>
+                <h2 className="text-lg font-semibold text-white">Today</h2>
+                <span className="hidden text-xs text-white/52 sm:inline">{longDate}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ArrowButton direction="left" />
+                <DateInput className="flex-1 sm:w-[156px]" />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant3() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] p-2 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="grid gap-2 rounded-[17px] bg-black/18 p-2 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+              <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">Timeline</div>
+              <div className="min-w-0 px-1">
+                <h2 className="text-lg font-semibold leading-tight text-white">Today</h2>
+                <p className="truncate text-xs text-white/55">{longDate}</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ArrowButton direction="left" />
+                <DateInput className="flex-1 sm:w-[148px]" />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant4() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3.5 py-3 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/55">Timeline</div>
+                  <h2 className="mt-0.5 text-lg font-semibold leading-tight text-white">Today</h2>
+                </div>
+                <span className="rounded-full border border-[#e68139]/25 bg-[#e68139]/10 px-3 py-1 text-xs text-[#ffd8bd]">{longDate}</span>
+              </div>
+              <div className="grid grid-cols-[auto_1fr_auto] gap-2">
+                <ArrowButton direction="left" />
+                <DateInput />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant5() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3.5 py-3 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-white/70">
+                  <CalendarIcon />
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/55">Timeline</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-white">Today</h2>
+                    <span className="text-xs text-white/55">{longDate}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex rounded-full border border-white/12 bg-black/18 p-1">
+                <button className="inline-flex size-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Previous day"><ArrowLeftIcon /></button>
+                <input type="date" defaultValue="2026-05-21" className="h-8 w-full min-w-0 bg-transparent px-2 text-center text-xs text-white outline-none [color-scheme:dark] sm:w-[134px]" />
+                <button className="inline-flex size-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Next day"><ArrowRightIcon /></button>
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant6() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3.5 py-3 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
+              <div className="flex items-center gap-1.5 rounded-full border border-white/12 bg-black/18 p-1">
+                <ArrowButton direction="left" />
+                <ArrowButton direction="right" />
+              </div>
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/55">Timeline</div>
+                  <h2 className="truncate text-lg font-semibold text-white">Today</h2>
+                </div>
+                <DateInput className="sm:w-[170px]" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant7() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3.5 py-3 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-[#265cff]/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white">Timeline</span>
+                <h2 className="text-lg font-semibold text-white">Today</h2>
+                <span className="ml-auto hidden rounded-full border border-white/14 bg-white/[0.08] px-2.5 py-1 text-xs text-white/60 sm:block">{longDate}</span>
+              </div>
+              <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                <DateInput />
+                <ArrowButton direction="left" />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function Variant8() {
+      return (
+        <Shell>
+          <section className="rounded-[21px] border border-white/15 bg-white/[0.08] px-3 py-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-1 rounded-full bg-[#265cff]" />
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/50">Timeline</div>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h2 className="text-lg font-semibold text-white">Today</h2>
+                      <span className="truncate text-xs text-white/52">{longDate}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:w-[260px]">
+                <ArrowButton direction="left" />
+                <DateInput />
+                <ArrowButton direction="right" />
+              </div>
+            </div>
+          </section>
+        </Shell>
+      );
+    }
+
+    function App() {
+      const [selected, setSelected] = React.useState(null);
+      const [comment, setComment] = React.useState('');
+      const [copied, setCopied] = React.useState(false);
+
+      const variants = [
+        { id: 1, name: 'Original Tightened', component: Variant1 },
+        { id: 2, name: 'Single-Line Dense', component: Variant2 },
+        { id: 3, name: 'Inset Rail', component: Variant3 },
+        { id: 4, name: 'Warm Date Chip', component: Variant4 },
+        { id: 5, name: 'Pill Control', component: Variant5 },
+        { id: 6, name: 'Left Nav Cluster', component: Variant6 },
+        { id: 7, name: 'Stacked Controls', component: Variant7 },
+        { id: 8, name: 'Accent Spine', component: Variant8 },
+      ];
+
+      const copyFeedback = () => {
+        navigator.clipboard.writeText(JSON.stringify({ variant: selected, comment }, null, 2));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      return (
+        <div>
+          <div className="grid grid-cols-1 gap-6 pb-12 xl:grid-cols-2">
+            {variants.map(({ id, name, component: C }) => (
+              <div key={id} className={`rounded-[22px] border-2 bg-[#0c1019]/82 p-4 transition-all ${selected === id ? 'border-[#265cff] ring-2 ring-[#265cff]/30' : 'border-white/10'}`}>
+                <div className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[#8d96aa]">Variant {id} - {name}</div>
+                <C />
+              </div>
+            ))}
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-[#0a0d14]/95 p-4 text-white backdrop-blur">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-start gap-2">
+              {variants.map(({ id }) => (
+                <button key={id} onClick={() => setSelected(id)}
+                  className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${selected === id ? 'bg-[#eef3ff] text-[#090d14]' : 'bg-white/[0.06] text-[#eef3ff] hover:bg-white/[0.1]'}`}>
+                  Select Variant {id}
+                </button>
+              ))}
+              {selected && (
+                <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row">
+                  <textarea value={comment} onChange={e => setComment(e.target.value)}
+                    placeholder="What do you like? What should change?" rows={2}
+                    className="min-h-16 flex-1 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none placeholder:text-[#8d96aa] focus:ring-4 focus:ring-[#265cff]/25" />
+                  <button onClick={copyFeedback}
+                    className="rounded-xl bg-[#265cff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#3f70ff]">
+                    {copied ? 'Feedback copied!' : 'Copy feedback'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="h-32" />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

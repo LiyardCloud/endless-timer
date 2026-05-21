@@ -42,6 +42,7 @@ Repo Firebase config:
 - Keep auth Google-only unless the user explicitly changes the requirement
 - Treat Firestore history as append-only for action-selection events
 - Do not change the title/history behavior without checking the product rules above
+- Keep the UI structurally flat and minimalist: do not create multi-layer card interfaces, nested cards, or stacked decorative containers unless the user explicitly asks for that layout
 
 ## Firestore Rules Deployment
 

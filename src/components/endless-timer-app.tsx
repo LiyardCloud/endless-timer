@@ -13,6 +13,7 @@ import {
   Calendar,
   CircleUserRound,
   Clock3,
+  Filter,
   House,
   LogOut,
   Download,
@@ -220,6 +221,16 @@ function parseDateTimeLocalValue(value: string) {
   }
 
   return parsed;
+}
+
+function formatDateInputLabel(dateKey: string) {
+  const [year, month, day] = dateKey.split("-");
+
+  if (!year || !month || !day) {
+    return dateKey;
+  }
+
+  return `${month}/${day}/${year}`;
 }
 
 function getHistoryNeighbors(history: HistoryEvent[], eventId: string) {
@@ -1162,6 +1173,7 @@ function TimelineView({
   onSubmitHistoryEdit: () => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(getTodayKey);
+  const selectedDateInputRef = useRef<HTMLInputElement | null>(null);
   const segments = buildActivitySegments(history, currentState, clockNow);
   const dailySegments = segments.filter((segment) => formatInputDate(segment.startMs) === selectedDate);
   const editActionOptions =
@@ -1177,38 +1189,74 @@ function TimelineView({
         ]
       : actions;
 
+  function openSelectedDatePicker() {
+    const input = selectedDateInputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
+  }
+
   return (
     <div className="space-y-4">
-      <Surface className="p-4 sm:p-5">
-        <CardHeader className="gap-3 p-0">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <Eyebrow>Timeline</Eyebrow>
-              <CardTitle className="mt-1 text-xl">{formatDayHeading(selectedDate)}</CardTitle>
-              <CardDescription className="mt-1">
-                Browse entries day by day with quick arrows or jump to any date.
-              </CardDescription>
+      <div className="rounded-[22px] bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.045)_0px,rgba(255,255,255,0.045)_1px,transparent_1px,transparent_9px),linear-gradient(135deg,rgba(38,92,255,0.26),rgba(7,9,16,0.9))] p-px">
+        <section className="rounded-[21px] border border-white/[0.08] bg-white/[0.06] px-3.5 py-3 shadow-panel backdrop-blur-xl">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="min-w-0">
+              <CardTitle className="text-lg leading-tight">{formatDayHeading(selectedDate)}</CardTitle>
             </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <Button variant="outline" size="sm" onClick={() => setSelectedDate((current) => shiftDateKey(current, -1))}>
-                <ArrowLeft size={15} />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setSelectedDate((current) => shiftDateKey(current, 1))}>
-                <ArrowRight size={15} />
-              </Button>
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="relative min-w-0 sm:w-[170px]">
+                <button
+                  aria-label="Selected day"
+                  className="flex h-9 w-full min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-black/20 px-3 text-left text-sm text-white"
+                  onClick={openSelectedDatePicker}
+                  type="button"
+                >
+                  <Calendar size={15} className="shrink-0 text-white/75" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-white">{formatDateInputLabel(selectedDate)}</span>
+                </button>
+                <input
+                  ref={selectedDateInputRef}
+                  className="pointer-events-none absolute inset-0 size-full opacity-0 [color-scheme:dark]"
+                  tabIndex={-1}
+                  type="date"
+                  value={selectedDate}
+                  onChange={(event) => setSelectedDate(event.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-black/18 p-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8 border-white/[0.055] bg-black/20 hover:border-white/[0.09] hover:bg-black/30"
+                  onClick={() => setSelectedDate((current) => shiftDateKey(current, -1))}
+                >
+                  <ArrowLeft size={14} />
+                  <span className="sr-only">Previous day</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8 border-white/[0.055] bg-black/20 hover:border-white/[0.09] hover:bg-black/30"
+                  onClick={() => setSelectedDate((current) => shiftDateKey(current, 1))}
+                >
+                  <ArrowRight size={14} />
+                  <span className="sr-only">Next day</span>
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_1fr]">
-            <Field label="Selected day">
-              <Input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-            </Field>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.035] px-4 py-3">
-              <p className="text-sm text-muted">Entries shown for</p>
-              <p className="mt-1 text-sm font-medium text-white">{formatDayRangeLabel(selectedDate, selectedDate)}</p>
-            </div>
-          </div>
-        </CardHeader>
-      </Surface>
+        </section>
+      </div>
 
       {historyEditTarget ? (
         <Surface className="p-4 sm:p-5">
@@ -1395,6 +1443,8 @@ function AnalyticsView({
     ...getDefaultRange("today")
   }));
   const [selectedActionId, setSelectedActionId] = useState<string>("all");
+  const analyticsFromInputRef = useRef<HTMLInputElement | null>(null);
+  const analyticsToInputRef = useRef<HTMLInputElement | null>(null);
   const rows = buildAnalyticsRows(history, currentState, clockNow, range.from, range.to, selectedActionId);
   const totalSeconds = rows.reduce((sum, row) => sum + row.seconds, 0);
 
@@ -1405,76 +1455,125 @@ function AnalyticsView({
     });
   }
 
+  function openAnalyticsDatePicker(input: HTMLInputElement | null) {
+    if (!input) {
+      return;
+    }
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
+  }
+
   return (
     <div className="space-y-4">
-      <Surface className="p-4 sm:p-5">
-        <CardHeader className="gap-3 p-0">
-          <div>
-            <Eyebrow>Analytics</Eyebrow>
-            <CardTitle className="mt-1 text-xl">Activity breakdown</CardTitle>
-            <CardDescription className="mt-1">
-              Defaulting to today, with quick ranges and action filters for deeper reads.
-            </CardDescription>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {(["today", "7d", "30d", "custom"] as AnalyticsPreset[]).map((preset) => (
-              <Button
-                key={preset}
-                variant="outline"
-                size="sm"
-                className={cn(range.preset === preset && "border-primary/35 bg-primary/12 text-primary")}
-                onClick={() => applyPreset(preset)}
-              >
-                {preset === "today" ? "Today" : preset === "7d" ? "Last 7 days" : preset === "30d" ? "Last 30 days" : "Custom"}
-              </Button>
-            ))}
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <Field label="From">
-              <Input
-                type="date"
-                value={range.from}
-                onChange={(event) =>
-                  setRange((current) => ({
-                    ...current,
-                    preset: "custom",
-                    from: event.target.value
-                  }))
-                }
-              />
-            </Field>
-            <Field label="To">
-              <Input
-                type="date"
-                value={range.to}
-                onChange={(event) =>
-                  setRange((current) => ({
-                    ...current,
-                    preset: "custom",
-                    to: event.target.value
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Activity filter">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                value={selectedActionId}
-                onChange={(event) => setSelectedActionId(event.target.value)}
-              >
-                <option value="all">All activities</option>
-                {actions.map((action) => (
-                  <option key={action.id} value={action.id}>
-                    {action.name}
+      <div className="rounded-[22px] bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.045)_0px,rgba(255,255,255,0.045)_1px,transparent_1px,transparent_9px),linear-gradient(135deg,rgba(38,92,255,0.26),rgba(7,9,16,0.9))] p-px">
+        <section className="rounded-[21px] border border-white/[0.08] bg-white/[0.06] px-3.5 py-3 shadow-panel backdrop-blur-xl">
+          <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_1.2fr]">
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Range</span>
+              <span className="flex h-9 min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-black/20 px-3 text-sm text-white">
+                <select
+                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none"
+                  value={range.preset}
+                  onChange={(event) => applyPreset(event.target.value as AnalyticsPreset)}
+                >
+                  <option value="today" className="bg-[#0b1020] text-white">
+                    Today
                   </option>
-                ))}
-              </select>
-            </Field>
+                  <option value="7d" className="bg-[#0b1020] text-white">
+                    Last 7 days
+                  </option>
+                  <option value="30d" className="bg-[#0b1020] text-white">
+                    Last 30 days
+                  </option>
+                  <option value="custom" className="bg-[#0b1020] text-white">
+                    Custom
+                  </option>
+                </select>
+              </span>
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">From</span>
+              <span className="relative block min-w-0">
+                <button
+                  className="flex h-9 w-full min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-black/20 px-3 text-left text-sm text-white"
+                  onClick={() => openAnalyticsDatePicker(analyticsFromInputRef.current)}
+                  type="button"
+                >
+                  <Calendar size={15} className="shrink-0 text-white/75" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-white">{formatDateInputLabel(range.from)}</span>
+                </button>
+                <input
+                  ref={analyticsFromInputRef}
+                  className="pointer-events-none absolute inset-0 size-full opacity-0 [color-scheme:dark]"
+                  tabIndex={-1}
+                  type="date"
+                  value={range.from}
+                  onChange={(event) =>
+                    setRange((current) => ({
+                      ...current,
+                      preset: "custom",
+                      from: event.target.value
+                    }))
+                  }
+                />
+              </span>
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">To</span>
+              <span className="relative block min-w-0">
+                <button
+                  className="flex h-9 w-full min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-black/20 px-3 text-left text-sm text-white"
+                  onClick={() => openAnalyticsDatePicker(analyticsToInputRef.current)}
+                  type="button"
+                >
+                  <Calendar size={15} className="shrink-0 text-white/75" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-white">{formatDateInputLabel(range.to)}</span>
+                </button>
+                <input
+                  ref={analyticsToInputRef}
+                  className="pointer-events-none absolute inset-0 size-full opacity-0 [color-scheme:dark]"
+                  tabIndex={-1}
+                  type="date"
+                  value={range.to}
+                  onChange={(event) =>
+                    setRange((current) => ({
+                      ...current,
+                      preset: "custom",
+                      to: event.target.value
+                    }))
+                  }
+                />
+              </span>
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Activity filter</span>
+              <span className="flex h-9 min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-black/20 px-3 text-sm text-white">
+                <Filter size={15} className="shrink-0 text-white/75" />
+                <select
+                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none"
+                  value={selectedActionId}
+                  onChange={(event) => setSelectedActionId(event.target.value)}
+                >
+                  <option value="all" className="bg-[#0b1020] text-white">
+                    All activities
+                  </option>
+                  {actions.map((action) => (
+                    <option key={action.id} value={action.id} className="bg-[#0b1020] text-white">
+                      {action.name}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            </label>
           </div>
-        </CardHeader>
-      </Surface>
+        </section>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1.32fr)]">
         <Surface className="p-4 sm:p-5">
