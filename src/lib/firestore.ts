@@ -11,11 +11,12 @@ import {
   query,
   serverTimestamp,
   setDoc,
-  updateDoc
+  updateDoc,
+  writeBatch
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import type { ActionItem } from "@/lib/types";
+import type { ActionItem, CurrentState } from "@/lib/types";
 import { DEFAULT_ACTIONS } from "@/lib/default-actions";
 
 function requireDb() {
@@ -137,29 +138,46 @@ export async function saveCurrentTitle(userId: string, title: string) {
 export async function selectAction(params: {
   userId: string;
   action: ActionItem;
-  title: string;
+  currentState: CurrentState;
+  previousTitle: string;
 }) {
-  const { userId, action, title } = params;
+  const { userId, action, currentState, previousTitle } = params;
+  const database = requireDb();
+  const currentHistorySnapshot = await getDocs(latestHistoryQuery(userId));
+  const currentHistoryEvent = currentHistorySnapshot.docs[0];
+  const currentHistoryData = currentHistoryEvent?.data();
+  const selectedAt = serverTimestamp();
+  const nextHistoryEventRef = doc(historyRef(userId));
+  const batch = writeBatch(database);
 
-  await addDoc(historyRef(userId), {
+  if (currentHistoryEvent && currentHistoryData?.actionId === currentState.currentActionId) {
+    batch.update(currentHistoryEvent.ref, {
+      titleSnapshot: previousTitle,
+      updatedAt: selectedAt
+    });
+  }
+
+  batch.set(nextHistoryEventRef, {
     actionId: action.id,
     actionName: action.name,
     actionColor: action.color,
     actionIcon: action.icon,
-    titleSnapshot: title,
+    titleSnapshot: "",
     userId,
-    startedAt: serverTimestamp()
+    startedAt: selectedAt
   });
 
-  await updateDoc(userRef(userId), {
+  batch.update(userRef(userId), {
     currentTitle: "",
     currentActionId: action.id,
     currentActionName: action.name,
     currentActionColor: action.color,
     currentActionIcon: action.icon,
-    currentStartedAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    currentStartedAt: selectedAt,
+    updatedAt: selectedAt
   });
+
+  await batch.commit();
 }
 
 export function latestHistoryQuery(userId: string) {

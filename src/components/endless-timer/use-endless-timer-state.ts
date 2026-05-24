@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
@@ -120,11 +120,13 @@ function useDebouncedTitleSave(params: {
   user: User | null;
   currentTitle: string;
   hydratedTitleRef: MutableRefObject<boolean>;
+  pendingTitleSaveRef: MutableRefObject<Promise<void>>;
   setErrorMessage: SetError;
   titleDraft: string;
+  titleSaveTimeoutRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
 }) {
-  const { user, currentTitle, hydratedTitleRef, setErrorMessage, titleDraft } = params;
-  const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, currentTitle, hydratedTitleRef, pendingTitleSaveRef, setErrorMessage, titleDraft, titleSaveTimeoutRef } =
+    params;
 
   useEffect(() => {
     if (!user || !hydratedTitleRef.current || titleDraft === currentTitle) {
@@ -136,7 +138,8 @@ function useDebouncedTitleSave(params: {
     }
 
     titleSaveTimeoutRef.current = setTimeout(() => {
-      void saveCurrentTitle(user.uid, titleDraft).catch((error) => {
+      titleSaveTimeoutRef.current = null;
+      pendingTitleSaveRef.current = saveCurrentTitle(user.uid, titleDraft).catch((error) => {
         setErrorMessage(getErrorMessage(error, "Failed to save title."));
       });
     }, 450);
@@ -144,9 +147,10 @@ function useDebouncedTitleSave(params: {
     return () => {
       if (titleSaveTimeoutRef.current) {
         clearTimeout(titleSaveTimeoutRef.current);
+        titleSaveTimeoutRef.current = null;
       }
     };
-  }, [currentTitle, hydratedTitleRef, setErrorMessage, titleDraft, user]);
+  }, [currentTitle, hydratedTitleRef, pendingTitleSaveRef, setErrorMessage, titleDraft, titleSaveTimeoutRef, user]);
 }
 
 function useTimerLiveData(user: User | null, busy: string | null, setErrorMessage: SetError) {
@@ -155,6 +159,8 @@ function useTimerLiveData(user: User | null, busy: string | null, setErrorMessag
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const hydratedTitleRef = useRef(false);
+  const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTitleSaveRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     if (user) {
@@ -218,16 +224,28 @@ function useTimerLiveData(user: User | null, busy: string | null, setErrorMessag
     user,
     currentTitle: currentState.currentTitle,
     hydratedTitleRef,
+    pendingTitleSaveRef,
     setErrorMessage,
-    titleDraft
+    titleDraft,
+    titleSaveTimeoutRef
   });
+
+  const prepareTitleForActionSelection = useCallback(async () => {
+    if (titleSaveTimeoutRef.current) {
+      clearTimeout(titleSaveTimeoutRef.current);
+      titleSaveTimeoutRef.current = null;
+    }
+
+    await pendingTitleSaveRef.current;
+  }, []);
 
   return {
     currentState,
     titleDraft,
     setTitleDraft,
     actions,
-    history
+    history,
+    prepareTitleForActionSelection
   };
 }
 
@@ -238,8 +256,10 @@ function useActionManagement(params: {
   setErrorMessage: SetError;
   setTitleDraft: (title: string) => void;
   titleDraft: string;
+  prepareTitleForActionSelection: () => Promise<void>;
 }) {
-  const { user, currentState, setBusy, setErrorMessage, setTitleDraft, titleDraft } = params;
+  const { user, currentState, setBusy, setErrorMessage, setTitleDraft, titleDraft, prepareTitleForActionSelection } =
+    params;
   const [actionDraft, setActionDraft] = useState<ActionDraft>(emptyDraft);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionMode, setActionMode] = useState<ActionMode>("select");
@@ -356,10 +376,12 @@ function useActionManagement(params: {
     try {
       setBusy("select-action");
       const snapshotTitle = titleDraft.trim();
+      await prepareTitleForActionSelection();
       await selectAction({
         userId: user.uid,
         action,
-        title: snapshotTitle
+        currentState,
+        previousTitle: snapshotTitle
       });
       setTitleDraft("");
     } catch (error) {
@@ -567,7 +589,8 @@ export function useEndlessTimerState() {
     setBusy,
     setErrorMessage,
     setTitleDraft: timerData.setTitleDraft,
-    titleDraft: timerData.titleDraft
+    titleDraft: timerData.titleDraft,
+    prepareTitleForActionSelection: timerData.prepareTitleForActionSelection
   });
   const historyEventManagement = useHistoryEventManagement({
     actions: timerData.actions,

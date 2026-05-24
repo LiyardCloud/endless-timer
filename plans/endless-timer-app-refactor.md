@@ -102,3 +102,20 @@ Target module layout:
 - [ ] Product invariants remain true for title/current-state/history behavior
 
 ---
+
+## ✅ Phase 7: Fix Title Snapshot Race
+
+- [x] Reproduce the likely race path from the refactor: current title debounce can outlive action selection and write the old title onto the newly selected action
+- [x] Make action selection cancel pending debounced title saves and await any already-started title save before writing the history event and clearing current state
+- [x] Verify lint and production build after the fix
+- [x] Add temporary dev-only logs around title saving, action selection, Firestore writes, and timeline history rows
+- [x] Use the logs to identify the real write bug: the outgoing title was being saved onto the newly selected history event
+- [x] Update the Firestore action-selection mutation to snapshot the title onto the outgoing latest history event and create the new action event blank
+- [x] Remove temporary debug logs after browser verification
+
+### Verify
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+- [x] Manual smoke test: enter a title on Work, select Break, and confirm the Work timeline entry keeps the title while Break starts blank
+
+---

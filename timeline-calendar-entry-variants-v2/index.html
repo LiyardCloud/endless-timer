@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline Hour Calendar Variants V2</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#070912] p-4 text-white sm:p-8" style="font-family: Inter, system-ui, sans-serif;">
+  <div class="mx-auto max-w-7xl">
+    <h1 class="mb-2 text-2xl font-bold">Timeline Hour Calendar - 4 Variants</h1>
+    <p class="mb-8 max-w-3xl text-sm text-white/55">Second pass: each option is an hour-divided day area filled by positioned action spans, like a compact calendar day view.</p>
+    <div id="root"></div>
+  </div>
+
+  <script type="text/babel">
+    const entries = [
+      { id: 1, action: 'Deep Work', icon: 'Focus', color: '#6ee7b7', start: '08:10', end: '10:45', startMin: 10, durationMin: 155, title: 'Proposal outline and architecture cleanup', active: false },
+      { id: 2, action: 'Break', icon: 'Pause', color: '#fbbf24', start: '10:45', end: '11:05', startMin: 165, durationMin: 20, title: 'Coffee and short walk', active: false },
+      { id: 3, action: 'Planning', icon: 'Plan', color: '#93c5fd', start: '11:05', end: '12:20', startMin: 185, durationMin: 75, title: 'Timeline calendar redesign notes', active: false },
+      { id: 4, action: 'Admin', icon: 'Inbox', color: '#fda4af', start: '13:10', end: '14:00', startMin: 310, durationMin: 50, title: 'Invoices and messages', active: false },
+      { id: 5, action: 'Deep Work', icon: 'Focus', color: '#6ee7b7', start: '14:00', end: 'Now', startMin: 360, durationMin: 110, title: 'Implementation pass', active: true }
+    ];
+
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+    const hourHeight = 52;
+    const dayHeight = hourHeight * (hours.length - 1);
+
+    function blockStyle(entry, minHeight = 26) {
+      return {
+        top: `${entry.startMin / 60 * hourHeight}px`,
+        height: `${Math.max(entry.durationMin / 60 * hourHeight, minHeight)}px`
+      };
+    }
+
+    function IconButton({ label, children, dark = true }) {
+      return (
+        <button className={`grid size-7 place-items-center rounded-full transition ${dark ? 'text-white/55 hover:bg-white/10 hover:text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'}`} aria-label={label}>
+          {children}
+        </button>
+      );
+    }
+
+    function EditDelete({ dark = true }) {
+      return (
+        <div className="flex items-center gap-1">
+          <IconButton label="Edit entry" dark={dark}>
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+          </IconButton>
+          <IconButton label="Delete entry" dark={dark}>
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+          </IconButton>
+        </div>
+      );
+    }
+
+    function Header({ title, meta, dark = true }) {
+      return (
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${dark ? 'text-white/45' : 'text-slate-400'}`}>Saturday</p>
+            <h2 className={`truncate text-lg font-semibold leading-tight ${dark ? 'text-white' : 'text-slate-950'}`}>{title}</h2>
+          </div>
+          <div className={`rounded-full px-3 py-1 text-xs font-medium ${dark ? 'border border-white/[0.08] bg-black/20 text-white/65' : 'border border-slate-200 bg-white text-slate-500'}`}>{meta}</div>
+        </div>
+      );
+    }
+
+    function Variant1() {
+      return (
+        <section className="rounded-[18px] border border-slate-200 bg-slate-50 p-4 text-slate-950 shadow-sm">
+          <Header title="May 23" meta="6h 50m" dark={false} />
+          <div className="grid grid-cols-[52px_1fr] gap-3">
+            <div className="relative" style={{ height: dayHeight }}>
+              {hours.slice(0, -1).map((hour, index) => (
+                <div key={hour} className="absolute right-0 text-[11px] font-medium text-slate-400" style={{ top: index * hourHeight - 1 }}>{hour}</div>
+              ))}
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white" style={{ height: dayHeight }}>
+              {hours.map((hour, index) => <div key={hour} className="absolute left-0 right-0 border-t border-slate-100" style={{ top: index * hourHeight }} />)}
+              {entries.map((entry) => (
+                <article key={entry.id} className="absolute left-2 right-2 rounded-lg border bg-white px-3 py-2 shadow-sm transition hover:z-10 hover:border-slate-300 hover:shadow-md" style={{ ...blockStyle(entry), borderColor: `${entry.color}66`, backgroundColor: `${entry.color}14` }}>
+                  <div className="flex h-full min-h-0 items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <strong className="truncate text-xs font-semibold">{entry.action}</strong>
+                        {entry.active && <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-700">Now</span>}
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] text-slate-500">{entry.title}</p>
+                    </div>
+                    <span className="shrink-0 text-[10px] font-medium text-slate-500">{entry.start}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Variant2() {
+      return (
+        <section className="rounded-[18px] bg-[#0f1117] p-4 text-white shadow-2xl">
+          <Header title="May 23 / Day Plan" meta="5 blocks" />
+          <div className="grid grid-cols-[46px_1fr] gap-3">
+            <div className="relative" style={{ height: dayHeight }}>
+              {hours.slice(0, -1).map((hour, index) => <div key={hour} className="absolute right-0 font-mono text-[10px] font-bold text-white/35" style={{ top: index * hourHeight }}>{hour}</div>)}
+            </div>
+            <div className="relative overflow-hidden rounded-sm border-2 border-white/20 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.11)_1px,transparent_1px)] bg-[length:100%_52px]" style={{ height: dayHeight }}>
+              {entries.map((entry, index) => (
+                <article key={entry.id} className="absolute left-2 right-2 border-2 border-black p-2 text-black shadow-[4px_4px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#bef264]" style={{ ...blockStyle(entry, 32), backgroundColor: entry.color }}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[10px] font-black">{entry.start} - {entry.end}</p>
+                      <h3 className="truncate text-sm font-black uppercase">{entry.action}</h3>
+                      {entry.durationMin > 45 && <p className="mt-0.5 truncate text-[11px] font-semibold text-black/65">{entry.title}</p>}
+                    </div>
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full border-2 border-black bg-white text-[10px] font-black">{index + 1}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Variant3() {
+      return (
+        <section className="rounded-[22px] bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.045)_0px,rgba(255,255,255,0.045)_1px,transparent_1px,transparent_9px),linear-gradient(135deg,rgba(38,92,255,0.26),rgba(7,9,16,0.9))] p-px">
+          <div className="rounded-[21px] border border-white/[0.08] bg-white/[0.06] p-4 shadow-2xl backdrop-blur-xl">
+            <Header title="Today" meta="08:10 to now" />
+            <div className="grid grid-cols-[48px_1fr] gap-3">
+              <div className="relative" style={{ height: dayHeight }}>
+                {hours.slice(0, -1).map((hour, index) => <div key={hour} className="absolute right-0 text-[11px] font-medium text-white/35" style={{ top: index * hourHeight }}>{hour}</div>)}
+              </div>
+              <div className="relative overflow-hidden rounded-[18px] border border-white/[0.08] bg-black/20" style={{ height: dayHeight }}>
+                {hours.map((hour, index) => <div key={hour} className="absolute left-0 right-0 border-t border-white/[0.07]" style={{ top: index * hourHeight }} />)}
+                <div className="absolute bottom-0 top-0 left-1/2 w-px bg-white/[0.035]" />
+                {entries.map((entry) => (
+                  <article key={entry.id} className="absolute left-2 right-2 rounded-[14px] border border-white/[0.10] bg-white/[0.09] px-3 py-2 backdrop-blur transition hover:bg-white/[0.13]" style={{ ...blockStyle(entry, 34), boxShadow: `inset 3px 0 0 ${entry.color}` }}>
+                    <div className="flex h-full min-h-0 justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-bold text-black" style={{ backgroundColor: entry.color }}>{entry.icon.slice(0, 1)}</span>
+                          <strong className="truncate text-xs font-semibold text-white">{entry.action}</strong>
+                        </div>
+                        {entry.durationMin > 35 && <p className="mt-1 truncate text-[11px] text-white/55">{entry.title}</p>}
+                      </div>
+                      <div className="shrink-0 text-right text-[10px] text-white/45">{entry.start}</div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Variant4() {
+      return (
+        <section className="bg-[#f5f1e7] p-4 text-black">
+          <div className="mb-3 grid grid-cols-[1fr_auto] border-4 border-black bg-white">
+            <div className="p-2">
+              <p className="font-['Space_Grotesk'] text-[10px] font-bold uppercase">Calendar sheet</p>
+              <h2 className="font-['Space_Grotesk'] text-2xl font-bold">Sat 23 May</h2>
+            </div>
+            <div className="border-l-4 border-black bg-[#facc15] p-2 text-right font-black">6h 50m</div>
+          </div>
+          <div className="grid grid-cols-[48px_1fr] gap-2">
+            <div className="relative border-r-4 border-black" style={{ height: dayHeight }}>
+              {hours.slice(0, -1).map((hour, index) => <div key={hour} className="absolute right-2 font-mono text-[10px] font-black" style={{ top: index * hourHeight }}>{hour}</div>)}
+            </div>
+            <div className="relative border-4 border-black bg-white" style={{ height: dayHeight }}>
+              {hours.map((hour, index) => <div key={hour} className="absolute left-0 right-0 border-t-4 border-black/80" style={{ top: index * hourHeight }} />)}
+              {entries.map((entry, index) => (
+                <article key={entry.id} className={`absolute border-4 border-black p-2 shadow-[4px_4px_0_#000] transition hover:-translate-x-1 ${index % 2 ? 'left-8 right-1' : 'left-1 right-8'}`} style={{ ...blockStyle(entry, 34), backgroundColor: entry.color }}>
+                  <p className="font-mono text-[10px] font-black">{entry.start} - {entry.end}</p>
+                  <h3 className="truncate font-['Space_Grotesk'] text-sm font-bold uppercase">{entry.action}</h3>
+                  {entry.durationMin > 40 && <p className="truncate text-[11px] font-bold">{entry.title}</p>}
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function App() {
+      const [selected, setSelected] = React.useState(null);
+      const [comment, setComment] = React.useState('');
+      const [copied, setCopied] = React.useState(false);
+
+      const variants = [
+        { id: 1, name: 'Minimal Hour Canvas', component: Variant1 },
+        { id: 2, name: 'Bold Block Calendar', component: Variant2 },
+        { id: 3, name: 'Compact Glass Day Grid', component: Variant3 },
+        { id: 4, name: 'Editorial Time Sheet', component: Variant4 }
+      ];
+
+      const copyFeedback = () => {
+        navigator.clipboard.writeText(JSON.stringify({ variant: selected, comment }, null, 2));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      return (
+        <div>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {variants.map(({ id, name, component: C }) => (
+              <div key={id} className={`rounded-xl border-2 bg-white/[0.03] p-4 transition ${selected === id ? 'border-sky-400 ring-2 ring-sky-400/30' : 'border-white/10'}`}>
+                <div className="mb-4 font-mono text-xs text-white/40">VARIANT {id} - {name}</div>
+                <C />
+              </div>
+            ))}
+          </div>
+
+          <div className="fixed inset-x-0 bottom-0 border-t border-white/10 bg-[#080a12]/95 p-4 backdrop-blur-xl">
+            <div className="mx-auto flex max-w-4xl flex-wrap items-start gap-2">
+              {variants.map(({ id }) => (
+                <button key={id} onClick={() => setSelected(id)}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${selected === id ? 'bg-sky-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/15'}`}>
+                  Select Variant {id}
+                </button>
+              ))}
+              {selected && (
+                <div className="mt-2 flex w-full gap-2">
+                  <textarea value={comment} onChange={e => setComment(e.target.value)}
+                    placeholder="What do you like? What should change?" rows={2}
+                    className="min-w-0 flex-1 resize-none rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-sky-400" />
+                  <button onClick={copyFeedback}
+                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-400">
+                    {copied ? 'Copied!' : 'Copy feedback'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          {copied && <div className="fixed bottom-32 left-1/2 -translate-x-1/2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-xl">Feedback copied!</div>}
+          <div className="h-36" />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
