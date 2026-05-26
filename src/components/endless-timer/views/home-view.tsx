@@ -98,7 +98,7 @@ export function HomeView(state: HomeViewProps) {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="grid grid-cols-1 gap-2.5 px-3 sm:grid-cols-2 sm:px-4 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:px-4 xl:grid-cols-3">
             {state.actions.map((action) => {
               const active = state.currentState.currentActionId === action.id;
               const Icon = getActionIcon(action.icon);
