@@ -58,7 +58,6 @@ Repo Firebase config:
 - Extract when a file starts mixing unrelated responsibilities or grows beyond roughly 300-400 lines, unless there is a clear reason to keep it together
 - Prefer explicit view props over passing entire state facades into every component; broad state props are acceptable only as a short-lived migration step
 - Keep pure helpers separate from React components so they can be tested or reviewed without rendering UI
-- When adding a multi-step feature or refactor, create or update a plan in `plans/` and keep it current as work progresses
 - After refactors, run `npm run lint` and `npm run build`; also smoke test auth, action selection, title saving, timeline, analytics, and profile flows when behavior could be affected
 
 ## Firestore Rules Deployment
