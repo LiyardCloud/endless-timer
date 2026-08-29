@@ -37,3 +37,13 @@ export type HistoryEvent = {
   startedAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 };
+
+export type ApiKeyRecord = {
+  id: string;
+  name: string;
+  prefix: string;
+  secretHash: string;
+  createdAt?: Timestamp | null;
+  lastUsedAt?: Timestamp | null;
+  revokedAt?: Timestamp | null;
+};

@@ -98,10 +98,20 @@ function AppContent({ page }: { page: AppPage }) {
                 <ProfileView
                   user={state.user}
                   currentState={state.currentState}
+                  actions={state.actions}
+                  history={state.history}
+                  clockNow={state.clockNow}
                   actionsCount={state.actions.length}
                   historyCount={state.history.length}
                   onSignOut={() => void state.handleSignOut()}
                   busy={state.busy}
+                  apiKeys={state.apiKeys}
+                  apiKeyName={state.apiKeyName}
+                  newApiKey={state.newApiKey}
+                  onApiKeyNameChange={state.setApiKeyName}
+                  onApiKeySubmit={state.handleApiKeySubmit}
+                  onNewApiKeyDismiss={() => state.setNewApiKey(null)}
+                  onRevokeApiKey={state.handleRevokeApiKey}
                 />
               ) : null}
             </section>

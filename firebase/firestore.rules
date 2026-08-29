@@ -23,6 +23,31 @@ service cloud.firestore {
         ]);
     }
 
+    function isValidApiKeyCreate() {
+      return request.resource.data.keys().hasOnly([
+          "name",
+          "prefix",
+          "secretHash",
+          "createdAt",
+          "lastUsedAt",
+          "revokedAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.prefix == "et"
+        && request.resource.data.secretHash is string
+        && request.resource.data.secretHash.matches("^[a-f0-9]{64}$")
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.lastUsedAt == null
+        && request.resource.data.revokedAt == null;
+    }
+
+    function isValidApiKeyRevoke() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["revokedAt"])
+        && request.resource.data.revokedAt is timestamp;
+    }
+
     match /users/{userId} {
       allow read, update, create: if isOwner(userId);
       allow delete: if false;
@@ -35,6 +60,13 @@ service cloud.firestore {
         allow read, create: if isOwner(userId);
         allow update: if isOwner(userId) && isValidHistoryUpdate(userId);
         allow delete: if isOwner(userId);
+      }
+
+      match /api_keys/{keyId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidApiKeyCreate();
+        allow update: if isOwner(userId) && isValidApiKeyRevoke();
+        allow delete: if false;
       }
     }
   }

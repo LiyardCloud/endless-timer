@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useActionManagement } from "@/components/endless-timer/hooks/use-action-management";
+import { useApiKeyManagement } from "@/components/endless-timer/hooks/use-api-key-management";
 import { useAuthSession } from "@/components/endless-timer/hooks/use-auth-session";
 import { useHistoryEventManagement } from "@/components/endless-timer/hooks/use-history-event-management";
 import { useTimerLiveData } from "@/components/endless-timer/hooks/use-timer-live-data";
@@ -27,6 +28,11 @@ export function useEndlessTimerState() {
   const authSession = useAuthSession(setBusy, setErrorMessage);
   const timerData = useTimerLiveData(authSession.user, busy, setErrorMessage);
   const clockNow = useClockNow();
+  const apiKeyManagement = useApiKeyManagement({
+    user: authSession.user,
+    setBusy,
+    setErrorMessage
+  });
   const actionManagement = useActionManagement({
     user: authSession.user,
     currentState: timerData.currentState,
@@ -58,6 +64,7 @@ export function useEndlessTimerState() {
     errorMessage,
     handleGoogleSignIn: authSession.handleGoogleSignIn,
     handleSignOut: authSession.handleSignOut,
+    ...apiKeyManagement,
     ...actionManagement,
     ...historyEventManagement
   };

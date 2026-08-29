@@ -1,0 +1,3 @@
+interface:
+  display_name: "Endless Timer Weekly Review"
+  short_description: "Analyze EndlessTimer weekly exports and trends"

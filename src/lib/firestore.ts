@@ -18,6 +18,7 @@ import {
 import { db } from "@/lib/firebase";
 import type { ActionItem, CurrentState } from "@/lib/types";
 import { DEFAULT_ACTIONS } from "@/lib/default-actions";
+import { getApiKeyPrefix } from "@/lib/api-keys";
 
 function requireDb() {
   if (!db) {
@@ -37,6 +38,10 @@ export function actionsRef(userId: string) {
 
 export function historyRef(userId: string) {
   return collection(requireDb(), "users", userId, "history_events");
+}
+
+export function apiKeysRef(userId: string) {
+  return collection(requireDb(), "users", userId, "api_keys");
 }
 
 export async function bootstrapUser(user: User) {
@@ -108,6 +113,27 @@ export async function removeAction(userId: string, actionId: string) {
 
 export async function removeHistoryEvent(userId: string, eventId: string) {
   await deleteDoc(doc(historyRef(userId), eventId));
+}
+
+export async function createApiKey(userId: string, key: { name: string; secretHash: string }) {
+  const keyRef = doc(apiKeysRef(userId));
+
+  await setDoc(keyRef, {
+    name: key.name,
+    secretHash: key.secretHash,
+    prefix: getApiKeyPrefix(),
+    createdAt: serverTimestamp(),
+    lastUsedAt: null,
+    revokedAt: null
+  });
+
+  return keyRef.id;
+}
+
+export async function revokeApiKey(userId: string, keyId: string) {
+  await updateDoc(doc(apiKeysRef(userId), keyId), {
+    revokedAt: serverTimestamp()
+  });
 }
 
 export async function updateHistoryEvent(
@@ -190,4 +216,8 @@ export function historyQuery(userId: string) {
 
 export function actionsQuery(userId: string) {
   return query(actionsRef(userId), orderBy("createdAt", "asc"));
+}
+
+export function apiKeysQuery(userId: string) {
+  return query(apiKeysRef(userId), orderBy("createdAt", "desc"));
 }

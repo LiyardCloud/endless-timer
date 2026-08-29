@@ -1,7 +1,7 @@
 import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 
 import { normalizeActionIconName } from "@/lib/action-icons";
-import type { ActionItem, HistoryEvent } from "@/lib/types";
+import type { ActionItem, ApiKeyRecord, HistoryEvent } from "@/lib/types";
 
 export function mapAction(docSnapshot: QueryDocumentSnapshot<DocumentData>): ActionItem {
   const data = docSnapshot.data();
@@ -29,5 +29,19 @@ export function mapHistory(docSnapshot: QueryDocumentSnapshot<DocumentData>): Hi
     userId: data.userId,
     startedAt: data.startedAt ?? null,
     updatedAt: data.updatedAt ?? null
+  };
+}
+
+export function mapApiKey(docSnapshot: QueryDocumentSnapshot<DocumentData>): ApiKeyRecord {
+  const data = docSnapshot.data();
+
+  return {
+    id: docSnapshot.id,
+    name: data.name,
+    prefix: data.prefix,
+    secretHash: data.secretHash,
+    createdAt: data.createdAt ?? null,
+    lastUsedAt: data.lastUsedAt ?? null,
+    revokedAt: data.revokedAt ?? null
   };
 }
