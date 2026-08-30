@@ -5,10 +5,19 @@ function getServiceAccount() {
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (serviceAccountKey) {
-    return JSON.parse(serviceAccountKey) as {
+    const parsed = JSON.parse(serviceAccountKey) as {
+      client_email?: string;
       clientEmail?: string;
+      private_key?: string;
       privateKey?: string;
+      project_id?: string;
       projectId?: string;
+    };
+
+    return {
+      projectId: parsed.projectId ?? parsed.project_id,
+      clientEmail: parsed.clientEmail ?? parsed.client_email,
+      privateKey: parsed.privateKey ?? parsed.private_key
     };
   }
 
