@@ -12,7 +12,9 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  writeBatch
+  where,
+  writeBatch,
+  type Timestamp
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -42,6 +44,11 @@ export function historyRef(userId: string) {
 
 export function apiKeysRef(userId: string) {
   return collection(requireDb(), "users", userId, "api_keys");
+}
+
+export async function findHistoryEventIdAtStart(userId: string, startedAt: Timestamp) {
+  const snapshot = await getDocs(query(historyRef(userId), where("startedAt", "==", startedAt), limit(1)));
+  return snapshot.docs[0]?.id ?? null;
 }
 
 export async function bootstrapUser(user: User) {

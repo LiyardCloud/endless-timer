@@ -50,7 +50,12 @@ function useDebouncedTitleSave(params: {
   }, [currentTitle, hydratedTitleRef, pendingTitleSaveRef, setErrorMessage, titleDraft, titleSaveTimeoutRef, user]);
 }
 
-export function useTimerLiveData(user: User | null, busy: string | null, setErrorMessage: SetError) {
+export function useTimerLiveData(
+  user: User | null,
+  busy: string | null,
+  setErrorMessage: SetError,
+  shouldLoadHistory: boolean
+) {
   const [currentState, setCurrentState] = useState<CurrentState>(emptyCurrentState);
   const [titleDraft, setTitleDraft] = useState("");
   const [actions, setActions] = useState<ActionItem[]>([]);
@@ -126,16 +131,24 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
       }
     });
 
+    return () => {
+      unsubscribeUser();
+      unsubscribeActions();
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || !db || !shouldLoadHistory) {
+      setHistory([]);
+      return;
+    }
+
     const unsubscribeHistory = onSnapshot(historyQuery(user.uid), (snapshot) => {
       setHistory(snapshot.docs.map(mapHistory));
     });
 
-    return () => {
-      unsubscribeUser();
-      unsubscribeActions();
-      unsubscribeHistory();
-    };
-  }, [user]);
+    return () => unsubscribeHistory();
+  }, [shouldLoadHistory, user]);
 
   useDebouncedTitleSave({
     user,

@@ -11,17 +11,18 @@ import type { ApiKeyRecord } from "@/lib/types";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
 
 export function useApiKeyManagement(params: {
+  enabled: boolean;
   user: User | null;
   setBusy: SetBusy;
   setErrorMessage: SetError;
 }) {
-  const { user, setBusy, setErrorMessage } = params;
+  const { enabled, user, setBusy, setErrorMessage } = params;
   const [apiKeys, setApiKeys] = useState<ApiKeyRecord[]>([]);
   const [apiKeyName, setApiKeyName] = useState("External export");
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !enabled) {
       setApiKeys([]);
       setNewApiKey(null);
       return;
@@ -32,7 +33,7 @@ export function useApiKeyManagement(params: {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [enabled, user]);
 
   async function handleApiKeySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

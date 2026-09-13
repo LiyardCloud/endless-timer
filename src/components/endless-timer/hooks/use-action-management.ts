@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
 
-import { createAction, removeAction, selectAction, updateAction } from "@/lib/firestore";
+import { createAction, findHistoryEventIdAtStart, removeAction, selectAction, updateAction } from "@/lib/firestore";
 import { logClientEvent } from "@/lib/client-logs";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import type { ActionItem, CurrentState, HistoryEvent } from "@/lib/types";
@@ -28,19 +28,16 @@ export function useActionManagement(params: {
   const [actionMode, setActionMode] = useState<ActionMode>("select");
   const [actionDeleteTarget, setActionDeleteTarget] = useState<ActionItem | null>(null);
 
-  function resolveCurrentHistoryEventId() {
+  async function resolveCurrentHistoryEventId() {
     if (currentState.currentHistoryEventId) {
       return currentState.currentHistoryEventId;
     }
 
-    const currentStartedAtMs = currentState.currentStartedAt?.toMillis();
+    if (!user || !currentState.currentStartedAt) {
+      return null;
+    }
 
-    return (
-      history.find(
-        (event) =>
-          event.actionId === currentState.currentActionId && event.startedAt?.toMillis() === currentStartedAtMs
-      )?.id ?? null
-    );
+    return findHistoryEventIdAtStart(user.uid, currentState.currentStartedAt);
   }
 
   function openCreateMode() {
@@ -158,7 +155,7 @@ export function useActionManagement(params: {
       await selectAction({
         userId: user.uid,
         action,
-        previousHistoryEventId: resolveCurrentHistoryEventId(),
+        previousHistoryEventId: await resolveCurrentHistoryEventId(),
         previousTitle: snapshotTitle
       });
       setTitleDraft("");

@@ -7,6 +7,7 @@ import { useApiKeyManagement } from "@/components/endless-timer/hooks/use-api-ke
 import { useAuthSession } from "@/components/endless-timer/hooks/use-auth-session";
 import { useHistoryEventManagement } from "@/components/endless-timer/hooks/use-history-event-management";
 import { useTimerLiveData } from "@/components/endless-timer/hooks/use-timer-live-data";
+import type { AppPage } from "@/components/endless-timer/types";
 
 function useClockNow() {
   const [clockNow, setClockNow] = useState(Date.now());
@@ -22,13 +23,14 @@ function useClockNow() {
   return clockNow;
 }
 
-export function useEndlessTimerState() {
+export function useEndlessTimerState(page: AppPage) {
   const [busy, setBusy] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const authSession = useAuthSession(setBusy, setErrorMessage);
-  const timerData = useTimerLiveData(authSession.user, busy, setErrorMessage);
+  const timerData = useTimerLiveData(authSession.user, busy, setErrorMessage, page !== "home");
   const clockNow = useClockNow();
   const apiKeyManagement = useApiKeyManagement({
+    enabled: page === "profile",
     user: authSession.user,
     setBusy,
     setErrorMessage

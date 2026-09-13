@@ -18,7 +18,7 @@ import { ProfileView } from "@/components/endless-timer/views/profile-view";
 import { TimelineView } from "@/components/endless-timer/views/timeline-view";
 
 function AppContent({ page }: { page: AppPage }) {
-  const state = useEndlessTimerState();
+  const state = useEndlessTimerState(page);
   const homeLoadLoggedForUser = useRef<string | null>(null);
 
   useEffect(() => {
