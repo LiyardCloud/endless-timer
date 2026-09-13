@@ -58,6 +58,7 @@ function mapCurrentState(data: UserRecord): CurrentState {
     currentActionName: data.currentActionName ?? null,
     currentActionColor: data.currentActionColor ?? null,
     currentActionIcon: data.currentActionIcon ?? null,
+    currentHistoryEventId: data.currentHistoryEventId ?? null,
     currentStartedAt: data.currentStartedAt ?? null
   };
 }

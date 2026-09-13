@@ -58,6 +58,7 @@ function serializeCurrentState(currentState: CurrentState) {
     currentActionName: currentState.currentActionName,
     currentActionColor: currentState.currentActionColor,
     currentActionIcon: currentState.currentActionIcon,
+    currentHistoryEventId: currentState.currentHistoryEventId ?? null,
     currentStartedAt: timestampToIso(currentState.currentStartedAt)
   };
 }

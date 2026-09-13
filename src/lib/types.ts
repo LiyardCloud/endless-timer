@@ -15,6 +15,7 @@ export type CurrentState = {
   currentActionName: string | null;
   currentActionColor: string | null;
   currentActionIcon: string | null;
+  currentHistoryEventId?: string | null;
   currentStartedAt?: Timestamp | null;
 };
 

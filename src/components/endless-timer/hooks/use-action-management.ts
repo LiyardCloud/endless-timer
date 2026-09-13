@@ -5,7 +5,7 @@ import type { User } from "firebase/auth";
 
 import { createAction, removeAction, selectAction, updateAction } from "@/lib/firestore";
 import { normalizeActionIconName } from "@/lib/action-icons";
-import type { ActionItem, CurrentState } from "@/lib/types";
+import type { ActionItem, CurrentState, HistoryEvent } from "@/lib/types";
 import { emptyDraft } from "@/components/endless-timer/constants";
 import type { ActionDraft, ActionMode } from "@/components/endless-timer/types";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
@@ -13,18 +13,34 @@ import { getErrorMessage, type SetBusy, type SetError } from "@/components/endle
 export function useActionManagement(params: {
   user: User | null;
   currentState: CurrentState;
+  history: HistoryEvent[];
   setBusy: SetBusy;
   setErrorMessage: SetError;
   setTitleDraft: (title: string) => void;
   titleDraft: string;
   prepareTitleForActionSelection: () => Promise<void>;
 }) {
-  const { user, currentState, setBusy, setErrorMessage, setTitleDraft, titleDraft, prepareTitleForActionSelection } =
+  const { user, currentState, history, setBusy, setErrorMessage, setTitleDraft, titleDraft, prepareTitleForActionSelection } =
     params;
   const [actionDraft, setActionDraft] = useState<ActionDraft>(emptyDraft);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionMode, setActionMode] = useState<ActionMode>("select");
   const [actionDeleteTarget, setActionDeleteTarget] = useState<ActionItem | null>(null);
+
+  function resolveCurrentHistoryEventId() {
+    if (currentState.currentHistoryEventId) {
+      return currentState.currentHistoryEventId;
+    }
+
+    const currentStartedAtMs = currentState.currentStartedAt?.toMillis();
+
+    return (
+      history.find(
+        (event) =>
+          event.actionId === currentState.currentActionId && event.startedAt?.toMillis() === currentStartedAtMs
+      )?.id ?? null
+    );
+  }
 
   function openCreateMode() {
     setActionMode("create");
@@ -141,7 +157,7 @@ export function useActionManagement(params: {
       await selectAction({
         userId: user.uid,
         action,
-        currentState,
+        previousHistoryEventId: resolveCurrentHistoryEventId(),
         previousTitle: snapshotTitle
       });
       setTitleDraft("");

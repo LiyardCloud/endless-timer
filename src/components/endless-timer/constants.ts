@@ -10,6 +10,7 @@ export const emptyCurrentState: CurrentState = {
   currentActionName: null,
   currentActionColor: null,
   currentActionIcon: null,
+  currentHistoryEventId: null,
   currentStartedAt: null
 };
 

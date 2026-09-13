@@ -36,6 +36,7 @@ export function useEndlessTimerState() {
   const actionManagement = useActionManagement({
     user: authSession.user,
     currentState: timerData.currentState,
+    history: timerData.history,
     setBusy,
     setErrorMessage,
     setTitleDraft: timerData.setTitleDraft,

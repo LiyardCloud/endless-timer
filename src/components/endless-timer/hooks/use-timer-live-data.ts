@@ -90,6 +90,7 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
         currentActionName: data.currentActionName ?? null,
         currentActionColor: data.currentActionColor ?? null,
         currentActionIcon: data.currentActionIcon ? normalizeActionIconName(data.currentActionIcon) : null,
+        currentHistoryEventId: data.currentHistoryEventId ?? null,
         currentStartedAt: data.currentStartedAt ?? null
       };
 

@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import type { ActionItem, CurrentState } from "@/lib/types";
+import type { ActionItem } from "@/lib/types";
 import { DEFAULT_ACTIONS } from "@/lib/default-actions";
 import { getApiKeyPrefix } from "@/lib/api-keys";
 
@@ -60,6 +60,7 @@ export async function bootstrapUser(user: User) {
       currentActionName: null,
       currentActionColor: null,
       currentActionIcon: null,
+      currentHistoryEventId: null,
       currentStartedAt: null
     });
   } else {
@@ -164,20 +165,17 @@ export async function saveCurrentTitle(userId: string, title: string) {
 export async function selectAction(params: {
   userId: string;
   action: ActionItem;
-  currentState: CurrentState;
+  previousHistoryEventId: string | null;
   previousTitle: string;
 }) {
-  const { userId, action, currentState, previousTitle } = params;
+  const { userId, action, previousHistoryEventId, previousTitle } = params;
   const database = requireDb();
-  const currentHistorySnapshot = await getDocs(latestHistoryQuery(userId));
-  const currentHistoryEvent = currentHistorySnapshot.docs[0];
-  const currentHistoryData = currentHistoryEvent?.data();
   const selectedAt = serverTimestamp();
   const nextHistoryEventRef = doc(historyRef(userId));
   const batch = writeBatch(database);
 
-  if (currentHistoryEvent && currentHistoryData?.actionId === currentState.currentActionId) {
-    batch.update(currentHistoryEvent.ref, {
+  if (previousHistoryEventId) {
+    batch.update(doc(historyRef(userId), previousHistoryEventId), {
       titleSnapshot: previousTitle,
       updatedAt: selectedAt
     });
@@ -199,15 +197,12 @@ export async function selectAction(params: {
     currentActionName: action.name,
     currentActionColor: action.color,
     currentActionIcon: action.icon,
+    currentHistoryEventId: nextHistoryEventRef.id,
     currentStartedAt: selectedAt,
     updatedAt: selectedAt
   });
 
   await batch.commit();
-}
-
-export function latestHistoryQuery(userId: string) {
-  return query(historyRef(userId), orderBy("startedAt", "desc"), limit(50));
 }
 
 export function historyQuery(userId: string) {
