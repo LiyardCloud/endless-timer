@@ -14,7 +14,7 @@ import {
   updateDoc,
   where,
   writeBatch,
-  type Timestamp
+  Timestamp
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -222,6 +222,40 @@ export async function selectAction(params: {
 
 export function historyQuery(userId: string) {
   return query(historyRef(userId), orderBy("startedAt", "desc"));
+}
+
+export function historyRangeQuery(userId: string, from: Date, to: Date) {
+  return query(
+    historyRef(userId),
+    where("startedAt", ">=", Timestamp.fromDate(from)),
+    where("startedAt", "<", Timestamp.fromDate(to)),
+    orderBy("startedAt", "asc")
+  );
+}
+
+export async function getHistoryRangeBoundaries(userId: string, from: Date, to: Date) {
+  const history = historyRef(userId);
+  const fromTimestamp = Timestamp.fromDate(from);
+  const toTimestamp = Timestamp.fromDate(to);
+  const [previous, next] = await Promise.all([
+    getDocs(query(history, where("startedAt", "<", fromTimestamp), orderBy("startedAt", "desc"), limit(1))),
+    getDocs(query(history, where("startedAt", ">=", toTimestamp), orderBy("startedAt", "asc"), limit(1)))
+  ]);
+
+  return [...previous.docs, ...next.docs];
+}
+
+export async function getHistoryRangeWithBoundaries(userId: string, from: Date, to: Date) {
+  const fromTimestamp = Timestamp.fromDate(from);
+  const toTimestamp = Timestamp.fromDate(to);
+  const history = historyRef(userId);
+  const [inRange, previous, next] = await Promise.all([
+    getDocs(query(history, where("startedAt", ">=", fromTimestamp), where("startedAt", "<", toTimestamp), orderBy("startedAt", "asc"))),
+    getDocs(query(history, where("startedAt", "<", fromTimestamp), orderBy("startedAt", "desc"), limit(1))),
+    getDocs(query(history, where("startedAt", ">=", toTimestamp), orderBy("startedAt", "asc"), limit(1)))
+  ]);
+
+  return [...previous.docs, ...inRange.docs, ...next.docs];
 }
 
 export function actionsQuery(userId: string) {

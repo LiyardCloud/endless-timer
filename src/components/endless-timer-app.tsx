@@ -91,6 +91,8 @@ function AppContent({ page }: { page: AppPage }) {
                   busy={state.busy}
                   historyEditTarget={state.historyEditTarget}
                   historyEditDraft={state.historyEditDraft}
+                  selectedDate={state.timelineDate}
+                  onSelectedDateChange={state.setTimelineDate}
                   onHistoryEditDraftChange={state.setHistoryEditDraft}
                   onRequestDeleteHistoryEvent={state.requestDeleteHistoryEvent}
                   onRequestEditHistoryEvent={state.requestEditHistoryEvent}
@@ -104,6 +106,8 @@ function AppContent({ page }: { page: AppPage }) {
                   currentState={state.currentState}
                   clockNow={state.clockNow}
                   actions={state.actions}
+                  range={state.analyticsRange}
+                  onRangeChange={state.setAnalyticsRange}
                 />
               ) : null}
               {page === "profile" ? (
@@ -111,10 +115,8 @@ function AppContent({ page }: { page: AppPage }) {
                   user={state.user}
                   currentState={state.currentState}
                   actions={state.actions}
-                  history={state.history}
                   clockNow={state.clockNow}
                   actionsCount={state.actions.length}
-                  historyCount={state.history.length}
                   onSignOut={() => void state.handleSignOut()}
                   busy={state.busy}
                   apiKeys={state.apiKeys}

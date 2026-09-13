@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Calendar, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getActionIcon } from "@/lib/action-icons";
-import { buildActivitySegments, formatDayHeading, formatInputDate, formatTimeOfDay, getTodayKey, shiftDateKey } from "@/lib/history";
+import { buildActivitySegments, formatDayHeading, formatInputDate, formatTimeOfDay, shiftDateKey } from "@/lib/history";
 import type { ActionItem, CurrentState, HistoryEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDateInputLabel, formatSegmentDuration } from "@/components/endless-timer/helpers";
@@ -20,6 +20,8 @@ export function TimelineView({
   busy,
   historyEditTarget,
   historyEditDraft,
+  selectedDate,
+  onSelectedDateChange,
   onHistoryEditDraftChange,
   onRequestDeleteHistoryEvent,
   onRequestEditHistoryEvent,
@@ -33,13 +35,14 @@ export function TimelineView({
   busy: string | null;
   historyEditTarget: HistoryEvent | null;
   historyEditDraft: HistoryEditDraft;
+  selectedDate: string;
+  onSelectedDateChange: (date: string) => void;
   onHistoryEditDraftChange: (draft: HistoryEditDraft) => void;
   onRequestDeleteHistoryEvent: (event: HistoryEvent) => void;
   onRequestEditHistoryEvent: (event: HistoryEvent) => void;
   onCancelHistoryEdit: () => void;
   onSubmitHistoryEdit: () => void;
 }) {
-  const [selectedDate, setSelectedDate] = useState(getTodayKey);
   const selectedDateInputRef = useRef<HTMLInputElement | null>(null);
   const segments = buildActivitySegments(history, currentState, clockNow);
   const dailySegments = segments.filter((segment) => formatInputDate(segment.startMs) === selectedDate);
@@ -97,7 +100,7 @@ export function TimelineView({
                   tabIndex={-1}
                   type="date"
                   value={selectedDate}
-                  onChange={(event) => setSelectedDate(event.target.value)}
+                  onChange={(event) => onSelectedDateChange(event.target.value)}
                 />
               </div>
               <div className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-black/18 p-1">
@@ -105,7 +108,7 @@ export function TimelineView({
                   variant="outline"
                   size="icon"
                   className="size-8 border-white/[0.055] bg-black/20 hover:border-white/[0.09] hover:bg-black/30"
-                  onClick={() => setSelectedDate((current) => shiftDateKey(current, -1))}
+                  onClick={() => onSelectedDateChange(shiftDateKey(selectedDate, -1))}
                 >
                   <ArrowLeft size={14} />
                   <span className="sr-only">Previous day</span>
@@ -114,7 +117,7 @@ export function TimelineView({
                   variant="outline"
                   size="icon"
                   className="size-8 border-white/[0.055] bg-black/20 hover:border-white/[0.09] hover:bg-black/30"
-                  onClick={() => setSelectedDate((current) => shiftDateKey(current, 1))}
+                  onClick={() => onSelectedDateChange(shiftDateKey(selectedDate, 1))}
                 >
                   <ArrowRight size={14} />
                   <span className="sr-only">Next day</span>

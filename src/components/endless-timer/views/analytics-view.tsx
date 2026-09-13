@@ -13,17 +13,17 @@ export function AnalyticsView({
   history,
   currentState,
   clockNow,
-  actions
+  actions,
+  range,
+  onRangeChange
 }: {
   history: HistoryEvent[];
   currentState: CurrentState;
   clockNow: number;
   actions: ActionItem[];
+  range: AnalyticsRange;
+  onRangeChange: (range: AnalyticsRange) => void;
 }) {
-  const [range, setRange] = useState<AnalyticsRange>(() => ({
-    preset: "today",
-    ...getDefaultRange("today")
-  }));
   const [selectedActionId, setSelectedActionId] = useState<string>("all");
   const analyticsFromInputRef = useRef<HTMLInputElement | null>(null);
   const analyticsToInputRef = useRef<HTMLInputElement | null>(null);
@@ -31,7 +31,7 @@ export function AnalyticsView({
   const totalSeconds = rows.reduce((sum, row) => sum + row.seconds, 0);
 
   function applyPreset(preset: AnalyticsPreset) {
-    setRange({
+    onRangeChange({
       preset,
       ...getDefaultRange(preset)
     });
@@ -97,11 +97,11 @@ export function AnalyticsView({
                   type="date"
                   value={range.from}
                   onChange={(event) =>
-                    setRange((current) => ({
-                      ...current,
+                    onRangeChange({
+                      ...range,
                       preset: "custom",
                       from: event.target.value
-                    }))
+                    })
                   }
                 />
               </span>
@@ -124,11 +124,11 @@ export function AnalyticsView({
                   type="date"
                   value={range.to}
                   onChange={(event) =>
-                    setRange((current) => ({
-                      ...current,
+                    onRangeChange({
+                      ...range,
                       preset: "custom",
                       to: event.target.value
-                    }))
+                    })
                   }
                 />
               </span>

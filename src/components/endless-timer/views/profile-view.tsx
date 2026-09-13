@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
+import { getCountFromServer } from "firebase/firestore";
 import { Calendar, CircleUserRound, Copy, Download, FileDown, KeyRound, LogOut, Settings2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,11 @@ import { CardContent, CardDescription, CardHeader, CardTitle } from "@/component
 import { Input } from "@/components/ui/input";
 import { usePwaInstall } from "@/components/pwa-provider";
 import { buildDataExport } from "@/lib/export-data";
+import { getHistoryRangeWithBoundaries, historyRef } from "@/lib/firestore";
+import { mapHistory } from "@/lib/firestore-mappers";
 import { downloadClientLogs } from "@/lib/client-logs";
 import { formatDayRangeLabel, getDefaultRange } from "@/lib/history";
-import type { ActionItem, ApiKeyRecord, CurrentState, HistoryEvent } from "@/lib/types";
+import type { ActionItem, ApiKeyRecord, CurrentState } from "@/lib/types";
 import { Eyebrow, Surface } from "@/components/endless-timer/ui-primitives";
 import type { AnalyticsPreset, AnalyticsRange } from "@/components/endless-timer/types";
 
@@ -43,10 +46,8 @@ export function ProfileView({
   user,
   currentState,
   actions,
-  history,
   clockNow,
   actionsCount,
-  historyCount,
   onSignOut,
   busy,
   apiKeys,
@@ -60,10 +61,8 @@ export function ProfileView({
   user: User;
   currentState: CurrentState;
   actions: ActionItem[];
-  history: HistoryEvent[];
   clockNow: number;
   actionsCount: number;
-  historyCount: number;
   onSignOut: () => void;
   busy: string | null;
   apiKeys: ApiKeyRecord[];
@@ -79,6 +78,20 @@ export function ProfileView({
     preset: "today",
     ...getDefaultRange("today")
   }));
+  const [historyCount, setHistoryCount] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getCountFromServer(historyRef(user.uid)).then((snapshot) => {
+      if (!cancelled) setHistoryCount(snapshot.data().count);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user.uid]);
 
   function applyExportPreset(preset: AnalyticsPreset) {
     setExportRange({
@@ -87,8 +100,15 @@ export function ProfileView({
     });
   }
 
-  function handleExportDownload() {
-    const data = buildDataExport({
+  async function handleExportDownload() {
+    const from = new Date(`${exportRange.from}T00:00:00`);
+    const to = new Date(`${exportRange.to}T00:00:00`);
+    to.setDate(to.getDate() + 1);
+
+    try {
+      setIsExporting(true);
+      const history = (await getHistoryRangeWithBoundaries(user.uid, from, to)).map(mapHistory);
+      const data = buildDataExport({
       user: {
         uid: user.uid,
         displayName: user.displayName,
@@ -103,7 +123,10 @@ export function ProfileView({
       nowMs: clockNow
     });
 
-    downloadJson(`endless-timer-${exportRange.from}-to-${exportRange.to}.json`, data);
+      downloadJson(`endless-timer-${exportRange.from}-to-${exportRange.to}.json`, data);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -138,7 +161,7 @@ export function ProfileView({
             </div>
             <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3">
               <p className="text-sm text-muted">History events</p>
-              <p className="mt-1 text-2xl font-semibold text-white">{historyCount}</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{historyCount ?? "—"}</p>
             </div>
           </div>
         </CardContent>
@@ -202,9 +225,9 @@ export function ProfileView({
                 />
               </label>
             </div>
-            <Button className="w-full justify-center sm:w-auto" onClick={handleExportDownload}>
+            <Button className="w-full justify-center sm:w-auto" onClick={() => void handleExportDownload()} disabled={isExporting}>
               <FileDown size={15} />
-              Download JSON
+              {isExporting ? "Preparing export..." : "Download JSON"}
             </Button>
           </CardContent>
         </Surface>

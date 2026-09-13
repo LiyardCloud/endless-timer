@@ -21,7 +21,7 @@
 
 - [ ] Give Timeline a date-scoped query plus bounded neighbouring entries for segment and edit calculations.
 - [ ] Give Analytics a selected-range query plus preceding and following boundary entries.
-- [ ] Keep full-range export as an on-demand query only after the user requests a download.
+- [x] Keep full-range export as an on-demand query only after the user requests a download.
 
 ### Verify
 - [ ] Changing Timeline date reads only that date's entries and boundaries.
@@ -29,11 +29,11 @@
 
 ---
 
-## 🔲 Phase 3: Profile And Bootstrap
+## 🔄 Phase 3: Profile And Bootstrap
 
-- [ ] Load API keys only on Profile.
-- [ ] Replace Profile history count with an aggregate count query.
-- [ ] Finish reducing bootstrap reads for returning users without breaking first-user defaults.
+- [x] Load API keys only on Profile.
+- [x] Replace Profile history count with an aggregate count query.
+- [x] Finish reducing bootstrap reads for returning users without breaking first-user defaults.
 
 ### Verify
 - [ ] Home never reads API keys or history solely to render.

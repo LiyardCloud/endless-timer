@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 
 import type { User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
-import { actionsQuery, historyQuery, saveCurrentTitle } from "@/lib/firestore";
+import { actionsQuery, getHistoryRangeBoundaries, historyRangeQuery, saveCurrentTitle } from "@/lib/firestore";
 import { logClientEvent } from "@/lib/client-logs";
 import { db } from "@/lib/firebase";
 import { normalizeActionIconName } from "@/lib/action-icons";
@@ -54,7 +54,7 @@ export function useTimerLiveData(
   user: User | null,
   busy: string | null,
   setErrorMessage: SetError,
-  shouldLoadHistory: boolean
+  historyRange: { from: Date; to: Date } | null
 ) {
   const [currentState, setCurrentState] = useState<CurrentState>(emptyCurrentState);
   const [titleDraft, setTitleDraft] = useState("");
@@ -67,6 +67,8 @@ export function useTimerLiveData(
   const activitiesLoadedForUserRef = useRef<string | null>(null);
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingTitleSaveRef = useRef<Promise<void>>(Promise.resolve());
+  const historyRangeFromMs = historyRange?.from.getTime() ?? null;
+  const historyRangeToMs = historyRange?.to.getTime() ?? null;
 
   useEffect(() => {
     busyRef.current = busy;
@@ -138,17 +140,31 @@ export function useTimerLiveData(
   }, [user]);
 
   useEffect(() => {
-    if (!user || !db || !shouldLoadHistory) {
+    if (!user || !db || historyRangeFromMs === null || historyRangeToMs === null) {
       setHistory([]);
       return;
     }
 
-    const unsubscribeHistory = onSnapshot(historyQuery(user.uid), (snapshot) => {
-      setHistory(snapshot.docs.map(mapHistory));
+    const from = new Date(historyRangeFromMs);
+    const to = new Date(historyRangeToMs);
+
+    let rangeHistory: HistoryEvent[] = [];
+    let boundaryHistory: HistoryEvent[] = [];
+    const publishHistory = () => {
+      const unique = new Map([...boundaryHistory, ...rangeHistory].map((event) => [event.id, event]));
+      setHistory([...unique.values()]);
+    };
+    const unsubscribeHistory = onSnapshot(historyRangeQuery(user.uid, from, to), (snapshot) => {
+      rangeHistory = snapshot.docs.map(mapHistory);
+      publishHistory();
+    });
+    void getHistoryRangeBoundaries(user.uid, from, to).then((docs) => {
+      boundaryHistory = docs.map(mapHistory);
+      publishHistory();
     });
 
     return () => unsubscribeHistory();
-  }, [shouldLoadHistory, user]);
+  }, [historyRangeFromMs, historyRangeToMs, user]);
 
   useDebouncedTitleSave({
     user,

@@ -8,6 +8,8 @@ import { useAuthSession } from "@/components/endless-timer/hooks/use-auth-sessio
 import { useHistoryEventManagement } from "@/components/endless-timer/hooks/use-history-event-management";
 import { useTimerLiveData } from "@/components/endless-timer/hooks/use-timer-live-data";
 import type { AppPage } from "@/components/endless-timer/types";
+import { getDefaultRange, getTodayKey } from "@/lib/history";
+import type { AnalyticsRange } from "@/components/endless-timer/types";
 
 function useClockNow() {
   const [clockNow, setClockNow] = useState(Date.now());
@@ -26,8 +28,18 @@ function useClockNow() {
 export function useEndlessTimerState(page: AppPage) {
   const [busy, setBusy] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [timelineDate, setTimelineDate] = useState(getTodayKey);
+  const [analyticsRange, setAnalyticsRange] = useState<AnalyticsRange>(() => ({ preset: "today", ...getDefaultRange("today") }));
   const authSession = useAuthSession(setBusy, setErrorMessage);
-  const timerData = useTimerLiveData(authSession.user, busy, setErrorMessage, page !== "home");
+  const historyRange =
+    page === "timeline"
+      ? { from: new Date(`${timelineDate}T00:00:00`), to: new Date(`${timelineDate}T00:00:00`) }
+      : page === "analytics"
+        ? { from: new Date(`${analyticsRange.from}T00:00:00`), to: new Date(`${analyticsRange.to}T00:00:00`) }
+        : null;
+
+  if (historyRange) historyRange.to.setDate(historyRange.to.getDate() + 1);
+  const timerData = useTimerLiveData(authSession.user, busy, setErrorMessage, historyRange);
   const clockNow = useClockNow();
   const apiKeyManagement = useApiKeyManagement({
     enabled: page === "profile",
@@ -63,6 +75,10 @@ export function useEndlessTimerState(page: AppPage) {
     setTitleDraft: timerData.setTitleDraft,
     actions: timerData.actions,
     history: timerData.history,
+    timelineDate,
+    setTimelineDate,
+    analyticsRange,
+    setAnalyticsRange,
     initialDataLoaded: timerData.initialDataLoaded,
     clockNow,
     errorMessage,
