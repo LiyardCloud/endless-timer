@@ -61,6 +61,7 @@ export function useEndlessTimerState() {
     setTitleDraft: timerData.setTitleDraft,
     actions: timerData.actions,
     history: timerData.history,
+    initialDataLoaded: timerData.initialDataLoaded,
     clockNow,
     errorMessage,
     handleGoogleSignIn: authSession.handleGoogleSignIn,

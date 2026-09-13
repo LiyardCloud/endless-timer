@@ -8,6 +8,7 @@ import { CardContent, CardDescription, CardHeader, CardTitle } from "@/component
 import { Input } from "@/components/ui/input";
 import { usePwaInstall } from "@/components/pwa-provider";
 import { buildDataExport } from "@/lib/export-data";
+import { downloadClientLogs } from "@/lib/client-logs";
 import { formatDayRangeLabel, getDefaultRange } from "@/lib/history";
 import type { ActionItem, ApiKeyRecord, CurrentState, HistoryEvent } from "@/lib/types";
 import { Eyebrow, Surface } from "@/components/endless-timer/ui-primitives";
@@ -284,6 +285,19 @@ export function ProfileView({
                 <p className="text-sm text-muted">No API keys yet.</p>
               )}
             </div>
+          </CardContent>
+        </Surface>
+
+        <Surface className="p-4 sm:p-5">
+          <CardHeader className="gap-1 p-0">
+            <CardTitle className="text-base">Diagnostics</CardTitle>
+            <CardDescription>Save local loading and activity events to share during troubleshooting.</CardDescription>
+          </CardHeader>
+          <CardContent className="mt-4 p-0">
+            <Button className="w-full justify-center sm:w-auto" onClick={downloadClientLogs}>
+              <FileDown size={15} />
+              Save Logs
+            </Button>
           </CardContent>
         </Surface>
 

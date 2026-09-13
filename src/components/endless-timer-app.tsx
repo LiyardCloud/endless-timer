@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { firebaseConfigured } from "@/lib/firebase";
+import { logClientEvent } from "@/lib/client-logs";
 import { navItems, pageDescription, pageTitle } from "@/components/endless-timer/constants";
 import type { AppPage } from "@/components/endless-timer/types";
 import { Eyebrow } from "@/components/endless-timer/ui-primitives";
@@ -17,6 +19,16 @@ import { TimelineView } from "@/components/endless-timer/views/timeline-view";
 
 function AppContent({ page }: { page: AppPage }) {
   const state = useEndlessTimerState();
+  const homeLoadLoggedForUser = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (page !== "home" || !state.user || !state.initialDataLoaded || homeLoadLoggedForUser.current === state.user.uid) {
+      return;
+    }
+
+    homeLoadLoggedForUser.current = state.user.uid;
+    logClientEvent("home-page-loaded", { activitiesCount: state.actions.length });
+  }, [page, state.actions.length, state.initialDataLoaded, state.user]);
 
   if (!state.user) {
     return (

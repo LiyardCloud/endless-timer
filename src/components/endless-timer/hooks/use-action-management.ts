@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
 
 import { createAction, removeAction, selectAction, updateAction } from "@/lib/firestore";
+import { logClientEvent } from "@/lib/client-logs";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import type { ActionItem, CurrentState, HistoryEvent } from "@/lib/types";
 import { emptyDraft } from "@/components/endless-timer/constants";
@@ -161,6 +162,7 @@ export function useActionManagement(params: {
         previousTitle: snapshotTitle
       });
       setTitleDraft("");
+      logClientEvent("activity-changed", { actionName: action.name });
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Failed to log action event."));
     } finally {

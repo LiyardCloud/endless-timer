@@ -5,6 +5,7 @@ import type { User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
 import { actionsQuery, historyQuery, saveCurrentTitle } from "@/lib/firestore";
+import { logClientEvent } from "@/lib/client-logs";
 import { db } from "@/lib/firebase";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import { mapAction, mapHistory } from "@/lib/firestore-mappers";
@@ -54,7 +55,10 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
   const [titleDraft, setTitleDraft] = useState("");
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
+  const [userSnapshotLoaded, setUserSnapshotLoaded] = useState(false);
+  const [actionsSnapshotLoaded, setActionsSnapshotLoaded] = useState(false);
   const hydratedTitleRef = useRef(false);
+  const activitiesLoadedForUserRef = useRef<string | null>(null);
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingTitleSaveRef = useRef<Promise<void>>(Promise.resolve());
 
@@ -65,6 +69,8 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
 
     setActions([]);
     setHistory([]);
+    setUserSnapshotLoaded(false);
+    setActionsSnapshotLoaded(false);
     setCurrentState(emptyCurrentState);
     setTitleDraft("");
     hydratedTitleRef.current = false;
@@ -75,7 +81,11 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
       return;
     }
 
+    setUserSnapshotLoaded(false);
+    setActionsSnapshotLoaded(false);
+
     const unsubscribeUser = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
+      setUserSnapshotLoaded(true);
       const data = snapshot.data() as UserRecord | undefined;
 
       if (!data) {
@@ -104,6 +114,11 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
 
     const unsubscribeActions = onSnapshot(actionsQuery(user.uid), (snapshot) => {
       setActions(snapshot.docs.map(mapAction));
+      setActionsSnapshotLoaded(true);
+      if (activitiesLoadedForUserRef.current !== user.uid) {
+        activitiesLoadedForUserRef.current = user.uid;
+        logClientEvent("activities-loaded", { count: snapshot.size });
+      }
     });
 
     const unsubscribeHistory = onSnapshot(historyQuery(user.uid), (snapshot) => {
@@ -142,6 +157,7 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
     setTitleDraft,
     actions,
     history,
+    initialDataLoaded: userSnapshotLoaded && actionsSnapshotLoaded,
     prepareTitleForActionSelection
   };
 }

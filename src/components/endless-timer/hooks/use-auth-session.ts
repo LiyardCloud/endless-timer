@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
 
 import { bootstrapUser } from "@/lib/firestore";
+import { logClientEvent } from "@/lib/client-logs";
 import { auth, googleProvider } from "@/lib/firebase";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
 
@@ -22,12 +23,17 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
       setAuthLoading(false);
       setErrorMessage(null);
 
+      logClientEvent(nextUser ? "authentication-complete" : "authentication-missing", {
+        signedIn: Boolean(nextUser)
+      });
+
       if (!nextUser) {
         return;
       }
 
       try {
         await bootstrapUser(nextUser);
+        logClientEvent("user-bootstrap-complete");
       } catch (error) {
         setErrorMessage(getErrorMessage(error, "Failed to bootstrap user."));
       }
