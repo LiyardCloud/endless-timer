@@ -64,16 +64,24 @@ export async function bootstrapUser(user: User) {
       currentStartedAt: null
     });
   } else {
-    await setDoc(
-      userDoc,
-      {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
+    const existingData = existingUser.data();
+    const profileChanged =
+      existingData.displayName !== user.displayName ||
+      existingData.email !== user.email ||
+      existingData.photoURL !== user.photoURL;
+
+    if (profileChanged) {
+      await setDoc(
+        userDoc,
+        {
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+    }
   }
 
   const existingActions = await getDocs(query(actionsRef(user.uid), limit(1)));

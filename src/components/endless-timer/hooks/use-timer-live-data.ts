@@ -58,9 +58,14 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
   const [userSnapshotLoaded, setUserSnapshotLoaded] = useState(false);
   const [actionsSnapshotLoaded, setActionsSnapshotLoaded] = useState(false);
   const hydratedTitleRef = useRef(false);
+  const busyRef = useRef(busy);
   const activitiesLoadedForUserRef = useRef<string | null>(null);
   const titleSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingTitleSaveRef = useRef<Promise<void>>(Promise.resolve());
+
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
 
   useEffect(() => {
     if (user) {
@@ -106,7 +111,7 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
 
       setCurrentState(nextState);
 
-      if (!hydratedTitleRef.current || busy === "select-action") {
+      if (!hydratedTitleRef.current || busyRef.current === "select-action") {
         setTitleDraft(nextState.currentTitle);
         hydratedTitleRef.current = true;
       }
@@ -130,7 +135,7 @@ export function useTimerLiveData(user: User | null, busy: string | null, setErro
       unsubscribeActions();
       unsubscribeHistory();
     };
-  }, [user, busy]);
+  }, [user]);
 
   useDebouncedTitleSave({
     user,
