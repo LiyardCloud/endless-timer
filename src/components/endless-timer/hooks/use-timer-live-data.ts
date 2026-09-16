@@ -7,6 +7,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { actionsQuery, getHistoryRangeBoundaries, historyRangeQuery, saveCurrentTitle } from "@/lib/firestore";
 import { logClientEvent } from "@/lib/client-logs";
 import { db } from "@/lib/firebase";
+import { externalSourcesMatch } from "@/lib/external-source";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import { mapAction, mapHistory } from "@/lib/firestore-mappers";
 import type { ActionItem, CurrentState, HistoryEvent, UserRecord } from "@/lib/types";
@@ -60,6 +61,7 @@ export function useTimerLiveData(
   const [titleDraft, setTitleDraft] = useState("");
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
+  const currentStateRef = useRef<CurrentState>(emptyCurrentState);
   const [userSnapshotLoaded, setUserSnapshotLoaded] = useState(false);
   const [actionsSnapshotLoaded, setActionsSnapshotLoaded] = useState(false);
   const hydratedTitleRef = useRef(false);
@@ -84,6 +86,7 @@ export function useTimerLiveData(
     setUserSnapshotLoaded(false);
     setActionsSnapshotLoaded(false);
     setCurrentState(emptyCurrentState);
+    currentStateRef.current = emptyCurrentState;
     setTitleDraft("");
     hydratedTitleRef.current = false;
   }, [user]);
@@ -102,6 +105,7 @@ export function useTimerLiveData(
 
       if (!data) {
         setCurrentState(emptyCurrentState);
+        currentStateRef.current = emptyCurrentState;
         setTitleDraft("");
         return;
       }
@@ -113,12 +117,21 @@ export function useTimerLiveData(
         currentActionColor: data.currentActionColor ?? null,
         currentActionIcon: data.currentActionIcon ? normalizeActionIconName(data.currentActionIcon) : null,
         currentHistoryEventId: data.currentHistoryEventId ?? null,
-        currentStartedAt: data.currentStartedAt ?? null
+        currentStartedAt: data.currentStartedAt ?? null,
+        currentExternalSource: data.currentExternalSource ?? null
       };
 
+      const previousState = currentStateRef.current;
+      const nextExternalSource = nextState.currentExternalSource;
+      const externalTitleChanged = nextExternalSource
+        ? !externalSourcesMatch(previousState.currentExternalSource, nextExternalSource) ||
+          previousState.currentTitle !== nextState.currentTitle
+        : false;
+
+      currentStateRef.current = nextState;
       setCurrentState(nextState);
 
-      if (!hydratedTitleRef.current || busyRef.current === "select-action") {
+      if (!hydratedTitleRef.current || busyRef.current === "select-action" || externalTitleChanged) {
         setTitleDraft(nextState.currentTitle);
         hydratedTitleRef.current = true;
       }

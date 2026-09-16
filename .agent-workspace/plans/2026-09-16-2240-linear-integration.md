@@ -1,6 +1,6 @@
 # Plan: Linear → EndlessTimer Integration
 
-**Status:** 🔲 todo
+**Status:** 🔄 in-progress
 **Created:** 2026-09-16
 
 ---
@@ -14,30 +14,31 @@
 - [x] Define manual-override semantics: selecting an EndlessTimer action should clear an active Linear binding, while Linear does not change state until a later qualifying transition.
 
 ### Verify
-- [x] Implement the VPS service in Go and run its compiled binary under `systemd`; defer the Docker decision until deployment preparation, since a container is not required for this single personal service.
-- [x] Defer Go version, secret provisioning, systemd-unit location, and the exact Makefile implementation until deployment preparation.
+- [x] Implement the VPS service in Node.js/TypeScript under `systemd`; defer the Docker decision until deployment preparation, since a container is not required for this single personal service.
+- [x] Defer Node.js version, secret provisioning, systemd-unit location, and the exact Makefile implementation until deployment preparation.
 - [x] Reserve the callback URL `https://api.timer.liyard.cloud/integrations/linear/callback`; register it before the OAuth connection flow is implemented.
 - [x] Confirm by design that OAuth credentials remain server-only and inaccessible to client code.
 
 ---
 
-## 🔲 Phase 2: Extend the timer model and domain operations
+## ✅ Phase 2: Extend the timer model and domain operations
 
-- [ ] Add typed `ExternalSource` metadata to user current state and history events, including Firestore mappers and export serialization.
-- [ ] Move activity-switch semantics from the browser-only Firestore helper into a reusable server-side domain module using Admin SDK transactions.
-- [ ] Implement idempotent `startExternalActivity`, matching the selected Focus action and atomically closing the prior event, creating the next event, and updating current state.
-- [ ] Implement guarded external-title update and detach operations that affect only the currently bound Linear issue.
-- [ ] Preserve existing manual selection semantics, including a fresh event when the same action is chosen again.
+- [x] Add typed `ExternalSource` metadata to user current state and history events, including Firestore mappers and export serialization.
+- [x] Add reusable server-side timer operations using Admin SDK transactions, separate from browser Firebase helpers.
+- [x] Implement idempotent `startExternalActivity`, which resolves the configured action, atomically closes the prior event, creates the next event, updates current state, and writes a private transition receipt.
+- [x] Implement guarded external-title update and detach operations that affect only the currently bound Linear issue.
+- [x] Preserve existing manual selection semantics, including a fresh event when the same action is chosen again and clearing `currentExternalSource`.
+- [x] Keep the title editable while a Linear binding is active; the next matching Linear title update remains authoritative.
 
 ### Verify
-- [ ] Unit-test normal switch, same-action switch, duplicate external transition, renamed active issue, detach, and manual override.
-- [ ] Run `npm run lint` and `npm run build`.
+- [x] Unit-test normal/same-action switch, duplicate external transition, renamed active issue, detach, and manual override.
+- [x] Run `npm test`, `npm run lint`, and `npm run build`.
 
 ---
 
 ## 🔲 Phase 3: Build the isolated Linear integration service
 
-- [ ] Create a deployable Go service for the VPS, separate from the Vercel Next.js runtime; decide the shared timer-domain boundary between Go and the existing TypeScript app.
+- [ ] Create a deployable Node.js 22+ / TypeScript service for the VPS, separate from the Vercel Next.js runtime and sharing only server-safe domain code with the web app.
 - [ ] Add the deployment assets: root-only secret-file contract, systemd unit, and `make up`, `make down`, `make update`, `make logs`, and `make status`.
 - [ ] Implement OAuth authorization-code flow with `read` scope, CSRF `state`, PKCE, callback validation, token exchange, and secure redirect back to Profile.
 - [ ] Store OAuth credentials and sync cursor/snapshots in a server-only Firestore location; encrypt tokens with a VPS-managed key before persistence.
@@ -64,5 +65,6 @@
 - [ ] Existing started issues at first connection create no event.
 - [ ] Repeated polls and a service restart create no duplicates.
 - [ ] Active-issue rename updates the title; active issue leaving `started` only detaches the binding.
+- [ ] A manually edited Linear-linked title persists until Linear later reports a title change.
 
 ---

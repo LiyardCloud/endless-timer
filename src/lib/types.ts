@@ -9,6 +9,13 @@ export type ActionItem = {
   updatedAt?: Timestamp | null;
 };
 
+export type ExternalSource = {
+  provider: "linear";
+  issueId: string;
+  identifier: string;
+  url?: string;
+};
+
 export type CurrentState = {
   currentTitle: string;
   currentActionId: string | null;
@@ -17,6 +24,7 @@ export type CurrentState = {
   currentActionIcon: string | null;
   currentHistoryEventId?: string | null;
   currentStartedAt?: Timestamp | null;
+  currentExternalSource?: ExternalSource | null;
 };
 
 export type UserRecord = CurrentState & {
@@ -35,6 +43,7 @@ export type HistoryEvent = {
   actionIcon: string;
   titleSnapshot: string;
   userId: string;
+  externalSource?: ExternalSource | null;
   startedAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 };

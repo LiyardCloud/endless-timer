@@ -27,6 +27,7 @@ export function mapHistory(docSnapshot: QueryDocumentSnapshot<DocumentData>): Hi
     actionIcon: normalizeActionIconName(data.actionIcon ?? "brain"),
     titleSnapshot: data.titleSnapshot ?? "",
     userId: data.userId,
+    externalSource: data.externalSource ?? null,
     startedAt: data.startedAt ?? null,
     updatedAt: data.updatedAt ?? null
   };

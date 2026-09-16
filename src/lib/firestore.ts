@@ -68,7 +68,8 @@ export async function bootstrapUser(user: User) {
       currentActionColor: null,
       currentActionIcon: null,
       currentHistoryEventId: null,
-      currentStartedAt: null
+      currentStartedAt: null,
+      currentExternalSource: null
     });
   } else {
     const existingData = existingUser.data();
@@ -214,6 +215,7 @@ export async function selectAction(params: {
     currentActionIcon: action.icon,
     currentHistoryEventId: nextHistoryEventRef.id,
     currentStartedAt: selectedAt,
+    currentExternalSource: null,
     updatedAt: selectedAt
   });
 

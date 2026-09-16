@@ -11,7 +11,8 @@ export const emptyCurrentState: CurrentState = {
   currentActionColor: null,
   currentActionIcon: null,
   currentHistoryEventId: null,
-  currentStartedAt: null
+  currentStartedAt: null,
+  currentExternalSource: null
 };
 
 export const emptyDraft: ActionDraft = {

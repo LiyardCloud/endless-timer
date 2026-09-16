@@ -46,6 +46,7 @@ function mapServerHistory(id: string, data: FirebaseFirestore.DocumentData): His
     actionIcon: data.actionIcon,
     titleSnapshot: data.titleSnapshot ?? "",
     userId: data.userId,
+    externalSource: data.externalSource ?? null,
     startedAt: data.startedAt ?? null,
     updatedAt: data.updatedAt ?? null
   };
@@ -59,7 +60,8 @@ function mapCurrentState(data: UserRecord): CurrentState {
     currentActionColor: data.currentActionColor ?? null,
     currentActionIcon: data.currentActionIcon ?? null,
     currentHistoryEventId: data.currentHistoryEventId ?? null,
-    currentStartedAt: data.currentStartedAt ?? null
+    currentStartedAt: data.currentStartedAt ?? null,
+    currentExternalSource: data.currentExternalSource ?? null
   };
 }
 

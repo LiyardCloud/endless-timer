@@ -59,7 +59,8 @@ function serializeCurrentState(currentState: CurrentState) {
     currentActionColor: currentState.currentActionColor,
     currentActionIcon: currentState.currentActionIcon,
     currentHistoryEventId: currentState.currentHistoryEventId ?? null,
-    currentStartedAt: timestampToIso(currentState.currentStartedAt)
+    currentStartedAt: timestampToIso(currentState.currentStartedAt),
+    currentExternalSource: currentState.currentExternalSource ?? null
   };
 }
 
@@ -83,6 +84,7 @@ function serializeHistoryEvent(event: HistoryEvent) {
     actionIcon: event.actionIcon,
     titleSnapshot: event.titleSnapshot,
     userId: event.userId,
+    externalSource: event.externalSource ?? null,
     startedAt: timestampToIso(event.startedAt),
     updatedAt: timestampToIso(event.updatedAt)
   };
