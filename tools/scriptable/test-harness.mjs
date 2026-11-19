@@ -53,7 +53,17 @@ function makeEnv({ keychain = {}, cache = null, response, family = "accessoryRec
       textFieldValue() { return alertInput; }
     },
     Color: Object.assign(class { constructor(hex) { this.hex = hex; } }, { gray: () => ({ hex: "gray" }) }),
-    Font: new Proxy({}, { get: () => (size) => ({ size }) }),
+    // Only real Scriptable Font factories (docs.scriptable.app/font); an unknown name throws like on iOS.
+    Font: Object.fromEntries([
+      "systemFont", "ultraLightSystemFont", "thinSystemFont", "lightSystemFont", "regularSystemFont",
+      "mediumSystemFont", "semiboldSystemFont", "boldSystemFont", "heavySystemFont", "blackSystemFont",
+      "italicSystemFont", "ultraLightMonospacedSystemFont", "thinMonospacedSystemFont",
+      "lightMonospacedSystemFont", "regularMonospacedSystemFont", "mediumMonospacedSystemFont",
+      "semiboldMonospacedSystemFont", "boldMonospacedSystemFont", "heavyMonospacedSystemFont",
+      "blackMonospacedSystemFont", "ultraLightRoundedSystemFont", "thinRoundedSystemFont",
+      "lightRoundedSystemFont", "regularRoundedSystemFont", "mediumRoundedSystemFont",
+      "semiboldRoundedSystemFont", "boldRoundedSystemFont", "heavyRoundedSystemFont", "blackRoundedSystemFont"
+    ].map((name) => [name, (size) => ({ name, size })])),
     ListWidget,
     Script: { setWidget: (w) => { out.widget = w; }, complete: () => { out.completed = true; } },
     config: { runsInApp, runningInWidget: !runsInApp, widgetFamily: runsInApp ? null : family },
