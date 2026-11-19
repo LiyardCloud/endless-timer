@@ -1,6 +1,15 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import {
+  browserLocalPersistence,
+  getAuth,
+  GoogleAuthProvider,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+
+import { logClientEvent } from "@/lib/client-logs";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,7 +28,27 @@ const app = isConfigured
     : initializeApp(firebaseConfig)
   : null;
 
-export const auth = app ? getAuth(app) : null;
+// Auth is created without a popupRedirectResolver: getAuth() would attach
+// browserPopupRedirectResolver, which on iOS/Safari/mobile makes Auth load gapi and
+// the authDomain iframe and check for a redirect result before resolving the user.
+// We only use signInWithPopup, which receives the resolver explicitly.
+function createAuth(firebaseApp: FirebaseApp): Auth {
+  logClientEvent("auth-init-start");
+
+  try {
+    return initializeAuth(firebaseApp, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+    });
+  } catch (error) {
+    // Already initialized (e.g. module re-evaluated by HMR): reuse the existing instance.
+    if ((error as { code?: string } | null)?.code === "auth/already-initialized") {
+      return getAuth(firebaseApp);
+    }
+    throw error;
+  }
+}
+
+export const auth = app ? createAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 export const googleProvider = app ? new GoogleAuthProvider() : null;
 export const firebaseConfigured = isConfigured;

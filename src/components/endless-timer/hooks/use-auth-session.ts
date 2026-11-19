@@ -1,12 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
+import {
+  browserPopupRedirectResolver,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User
+} from "firebase/auth";
 
 import { bootstrapUser } from "@/lib/firestore";
-import { logClientEvent } from "@/lib/client-logs";
+import { getAuthResourceTimings, logClientEvent } from "@/lib/client-logs";
 import { auth, googleProvider } from "@/lib/firebase";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
+
+function isDisplayModeStandalone() {
+  if (typeof window === "undefined") return false;
+
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches === true ||
+    navigatorWithStandalone.standalone === true
+  );
+}
 
 export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +40,9 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
       setErrorMessage(null);
 
       logClientEvent(nextUser ? "authentication-complete" : "authentication-missing", {
-        signedIn: Boolean(nextUser)
+        signedIn: Boolean(nextUser),
+        displayModeStandalone: isDisplayModeStandalone(),
+        authResources: getAuthResourceTimings(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN)
       });
 
       if (!nextUser) {
@@ -49,7 +67,7 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
 
     try {
       setBusy("sign-in");
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Sign-in failed."));
     } finally {
