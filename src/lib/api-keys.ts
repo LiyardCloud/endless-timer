@@ -49,19 +49,31 @@ export function formatApiKey(params: { userId: string; keyId: string; secret: st
   return [API_KEY_PREFIX, stringToBase64Url(params.userId), params.keyId, params.secret].join("_");
 }
 
-export function parseApiKey(value: string) {
-  const [prefix, encodedUserId, keyId, secret, ...rest] = value.trim().split("_");
+/**
+ * Key format: `et_<base64url(userId)>_<keyId>_<secret>`.
+ *
+ * Both the encoded userId and the secret are base64url and may themselves contain `_`,
+ * so the key cannot be split on `_`. It is parsed from the end, where every part has a
+ * fixed shape, which makes the split unambiguous:
+ * - secret: always exactly 43 base64url chars (32 random bytes, unpadded);
+ * - keyId: Firestore auto-id, exactly 20 chars `[A-Za-z0-9]`, between `_` separators;
+ * - userId: everything between `et_` and `_<keyId>_` (non-empty base64url).
+ */
+const API_KEY_PATTERN = /^et_([A-Za-z0-9_-]+)_([A-Za-z0-9]{20})_([A-Za-z0-9_-]{43})$/;
 
-  if (prefix !== API_KEY_PREFIX || !encodedUserId || !keyId || !secret || rest.length) {
+export function parseApiKey(value: string) {
+  const match = API_KEY_PATTERN.exec(value.trim());
+
+  if (!match) {
     return null;
   }
 
+  const [, encodedUserId, keyId, secret] = match;
+
   try {
-    return {
-      userId: base64UrlToString(encodedUserId),
-      keyId,
-      secret
-    };
+    const userId = base64UrlToString(encodedUserId);
+
+    return userId ? { userId, keyId, secret } : null;
   } catch {
     return null;
   }
