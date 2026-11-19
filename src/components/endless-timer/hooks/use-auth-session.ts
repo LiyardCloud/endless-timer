@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   browserPopupRedirectResolver,
   onAuthStateChanged,
@@ -11,7 +11,7 @@ import {
 
 import { bootstrapUser } from "@/lib/firestore";
 import { getAuthResourceTimings, logClientEvent } from "@/lib/client-logs";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, prewarmPopupResolver } from "@/lib/firebase";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
 
 function isDisplayModeStandalone() {
@@ -24,9 +24,46 @@ function isDisplayModeStandalone() {
   );
 }
 
+const PREWARM_TIMEOUT_MS = 5000;
+
 export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [signInPreparing, setSignInPreparing] = useState(false);
+  const prewarmRun = useRef(0);
+
+  // Only for the signed-out screen: a signed-in launch must not load gapi / the authDomain iframe.
+  const prewarmSignIn = useCallback(() => {
+    const run = ++prewarmRun.current;
+    const startedAt = performance.now();
+    let finished = false;
+
+    const finish = (outcome: "success" | "error" | "timeout", error?: unknown) => {
+      if (finished) return;
+      finished = true;
+      if (prewarmRun.current === run) setSignInPreparing(false);
+      logClientEvent("sign-in-prewarm-settled", {
+        outcome,
+        elapsedMs: Math.round(performance.now() - startedAt),
+        error: error ? getErrorMessage(error, "unknown") : undefined
+      });
+    };
+
+    setSignInPreparing(true);
+    logClientEvent("sign-in-prewarm-start");
+
+    const timeoutId = window.setTimeout(() => finish("timeout"), PREWARM_TIMEOUT_MS);
+    prewarmPopupResolver().then(
+      () => {
+        window.clearTimeout(timeoutId);
+        finish("success");
+      },
+      (error: unknown) => {
+        window.clearTimeout(timeoutId);
+        finish("error", error);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     if (!auth) {
@@ -46,8 +83,13 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
       });
 
       if (!nextUser) {
+        prewarmSignIn();
         return;
       }
+
+      // Signed in: cancel a pending prewarm's effect on the sign-in button.
+      prewarmRun.current++;
+      setSignInPreparing(false);
 
       try {
         await bootstrapUser(nextUser);
@@ -58,7 +100,7 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
     });
 
     return () => unsubscribe();
-  }, [setErrorMessage]);
+  }, [prewarmSignIn, setErrorMessage]);
 
   async function handleGoogleSignIn() {
     if (!auth || !googleProvider) {
@@ -93,6 +135,7 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
   return {
     user,
     authLoading,
+    signInPreparing,
     handleGoogleSignIn,
     handleSignOut
   };

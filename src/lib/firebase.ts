@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   browserLocalPersistence,
+  browserPopupRedirectResolver,
   getAuth,
   GoogleAuthProvider,
   indexedDBLocalPersistence,
@@ -8,6 +9,7 @@ import {
   type Auth
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { _getInstance, type PopupRedirectResolverInternal } from "@firebase/auth/internal";
 
 import { logClientEvent } from "@/lib/client-logs";
 
@@ -49,6 +51,24 @@ function createAuth(firebaseApp: FirebaseApp): Auth {
 }
 
 export const auth = app ? createAuth(app) : null;
+/**
+ * Loads gapi and the authDomain iframe for the popup resolver ahead of time, so a later
+ * signInWithPopup can call window.open while Safari still treats it as a user gesture.
+ *
+ * This is the same call Auth makes proactively on Safari/iOS/mobile when created with a
+ * resolver. It goes through the internal API because the public alternative,
+ * getRedirectResult(auth, resolver), returns null without initializing the resolver when
+ * no redirect is pending. _getInstance returns the same resolver singleton that
+ * signInWithPopup uses. The call is cached per Auth instance: once it has succeeded,
+ * later calls resolve immediately; after a failure, the next call retries.
+ */
+export async function prewarmPopupResolver(): Promise<void> {
+  if (!auth) return;
+
+  const resolver = _getInstance<PopupRedirectResolverInternal>(browserPopupRedirectResolver);
+  await resolver._initialize(auth as Parameters<PopupRedirectResolverInternal["_initialize"]>[0]);
+}
+
 export const db = app ? getFirestore(app) : null;
 export const googleProvider = app ? new GoogleAuthProvider() : null;
 export const firebaseConfigured = isConfigured;

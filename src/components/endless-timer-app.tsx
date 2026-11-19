@@ -34,6 +34,7 @@ function AppContent({ page }: { page: AppPage }) {
     return (
       <SignedOutState
         authLoading={state.authLoading}
+        signInPreparing={state.signInPreparing}
         busy={state.busy}
         errorMessage={state.errorMessage}
         onGoogleSignIn={() => void state.handleGoogleSignIn()}

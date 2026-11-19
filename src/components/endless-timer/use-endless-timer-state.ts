@@ -69,6 +69,7 @@ export function useEndlessTimerState(page: AppPage) {
   return {
     user: authSession.user,
     authLoading: authSession.authLoading,
+    signInPreparing: authSession.signInPreparing,
     busy,
     currentState: timerData.currentState,
     titleDraft: timerData.titleDraft,

@@ -13,11 +13,13 @@ import { Eyebrow } from "@/components/endless-timer/ui-primitives";
 
 export function SignedOutState({
   authLoading,
+  signInPreparing,
   busy,
   errorMessage,
   onGoogleSignIn
 }: {
   authLoading: boolean;
+  signInPreparing: boolean;
   busy: string | null;
   errorMessage: string | null;
   onGoogleSignIn: () => void;
@@ -61,9 +63,13 @@ export function SignedOutState({
               <Button
                 className="w-full"
                 onClick={onGoogleSignIn}
-                disabled={!firebaseConfigured || authLoading || busy === "sign-in"}
+                disabled={!firebaseConfigured || authLoading || signInPreparing || busy === "sign-in"}
               >
-                {authLoading ? "Checking session..." : "Sign in with Google"}
+                {authLoading
+                  ? "Checking session..."
+                  : signInPreparing
+                    ? "Preparing sign-in..."
+                    : "Sign in with Google"}
               </Button>
               <p className="text-sm text-muted">Authentication is required to use the app.</p>
             </CardContent>
