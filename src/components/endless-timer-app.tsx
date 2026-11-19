@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { firebaseConfigured } from "@/lib/firebase";
-import { logClientEvent } from "@/lib/client-logs";
+import { logClientEvent, logClientEventOnce } from "@/lib/client-logs";
 import { navItems, pageDescription, pageTitle } from "@/components/endless-timer/constants";
 import type { AppPage } from "@/components/endless-timer/types";
 import { Eyebrow } from "@/components/endless-timer/ui-primitives";
@@ -27,6 +27,8 @@ function AppContent({ page }: { page: AppPage }) {
     }
 
     homeLoadLoggedForUser.current = state.user.uid;
+    // This is also the moment the action buttons first become clickable for a signed-in user:
+    // they render with the loaded actions in this commit and are only disabled while busy.
     logClientEvent("home-page-loaded", { activitiesCount: state.actions.length });
   }, [page, state.actions.length, state.initialDataLoaded, state.user]);
 
@@ -34,6 +36,7 @@ function AppContent({ page }: { page: AppPage }) {
     return (
       <SignedOutState
         authLoading={state.authLoading}
+        signInPreparing={state.signInPreparing}
         busy={state.busy}
         errorMessage={state.errorMessage}
         onGoogleSignIn={() => void state.handleGoogleSignIn()}
@@ -141,6 +144,9 @@ function AppContent({ page }: { page: AppPage }) {
 
 export function EndlessTimerApp({ page }: { page?: AppPage }) {
   const pathname = usePathname();
+
+  // First React hydration/mount of the app shell in this launch (later page switches remount it).
+  useEffect(() => logClientEventOnce("app-shell-mounted"), []);
 
   const resolvedPage =
     page ??

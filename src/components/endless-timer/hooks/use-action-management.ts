@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
 
 import { createAction, findHistoryEventIdAtStart, removeAction, selectAction, updateAction } from "@/lib/firestore";
-import { logClientEvent } from "@/lib/client-logs";
+import { getErrorCode, logClientEvent } from "@/lib/client-logs";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import type { ActionItem, CurrentState, HistoryEvent } from "@/lib/types";
 import { emptyDraft } from "@/components/endless-timer/constants";
@@ -148,19 +148,31 @@ export function useActionManagement(params: {
       return;
     }
 
+    const tapAt = performance.now();
     try {
       setBusy("select-action");
       const snapshotTitle = titleDraft.trim();
       await prepareTitleForActionSelection();
+      const previousHistoryEventId = await resolveCurrentHistoryEventId();
+      // The batch commit resolves only once the server has acknowledged the write.
+      const writeStartedAt = performance.now();
       await selectAction({
         userId: user.uid,
         action,
-        previousHistoryEventId: await resolveCurrentHistoryEventId(),
+        previousHistoryEventId,
         previousTitle: snapshotTitle
       });
       setTitleDraft("");
-      logClientEvent("activity-changed", { actionName: action.name });
+      logClientEvent("activity-changed", {
+        actionName: action.name,
+        serverAckMs: Math.round(performance.now() - writeStartedAt),
+        totalMs: Math.round(performance.now() - tapAt)
+      });
     } catch (error) {
+      logClientEvent("activity-change-failed", {
+        code: getErrorCode(error),
+        totalMs: Math.round(performance.now() - tapAt)
+      });
       setErrorMessage(getErrorMessage(error, "Failed to log action event."));
     } finally {
       setBusy(null);
