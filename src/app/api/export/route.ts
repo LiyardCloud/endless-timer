@@ -1,41 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
-import { timingSafeEqual } from "node:crypto";
 
-import { hashApiKeySecret, parseApiKey } from "@/lib/api-keys";
+import { mapCurrentState, mapServerAction } from "@/lib/api-activity";
+import { apiErrorResponse, getApiKeyFromRequest, inactiveApiKeyResponse, missingApiKeyResponse, verifyApiKey } from "@/lib/api-auth";
 import { buildDataExport, validateExportRange } from "@/lib/export-data";
 import { getAdminDb } from "@/lib/firebase-admin";
-import type { ActionItem, CurrentState, HistoryEvent, UserRecord } from "@/lib/types";
+import type { HistoryEvent, UserRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
-
-function getBearerToken(request: NextRequest) {
-  const authorization = request.headers.get("authorization");
-
-  if (!authorization?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  return authorization.slice("Bearer ".length).trim();
-}
-
-function safeEqual(left: string, right: string) {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-
-  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
-}
-
-function mapServerAction(id: string, data: FirebaseFirestore.DocumentData): ActionItem {
-  return {
-    id,
-    name: data.name,
-    color: data.color,
-    icon: data.icon,
-    createdAt: data.createdAt ?? null,
-    updatedAt: data.updatedAt ?? null
-  };
-}
 
 function mapServerHistory(id: string, data: FirebaseFirestore.DocumentData): HistoryEvent {
   return {
@@ -51,18 +23,6 @@ function mapServerHistory(id: string, data: FirebaseFirestore.DocumentData): His
   };
 }
 
-function mapCurrentState(data: UserRecord): CurrentState {
-  return {
-    currentTitle: data.currentTitle ?? "",
-    currentActionId: data.currentActionId ?? null,
-    currentActionName: data.currentActionName ?? null,
-    currentActionColor: data.currentActionColor ?? null,
-    currentActionIcon: data.currentActionIcon ?? null,
-    currentHistoryEventId: data.currentHistoryEventId ?? null,
-    currentStartedAt: data.currentStartedAt ?? null
-  };
-}
-
 export async function GET(request: NextRequest) {
   const from = request.nextUrl.searchParams.get("from");
   const to = request.nextUrl.searchParams.get("to");
@@ -72,27 +32,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Provide a valid from/to period as YYYY-MM-DD." }, { status: 400 });
   }
 
-  const token = getBearerToken(request);
-  const parsedKey = token ? parseApiKey(token) : null;
+  const parsedKey = getApiKeyFromRequest(request);
 
   if (!parsedKey) {
-    return NextResponse.json({ error: "Missing or invalid API key." }, { status: 401 });
+    return missingApiKeyResponse();
   }
 
   try {
     const db = getAdminDb();
-    const apiKeyRef = db.doc(`users/${parsedKey.userId}/api_keys/${parsedKey.keyId}`);
-    const apiKeySnapshot = await apiKeyRef.get();
-    const apiKeyData = apiKeySnapshot.data();
+    const apiKeyRef = await verifyApiKey(db, parsedKey);
 
-    if (!apiKeyData?.secretHash || apiKeyData.revokedAt) {
-      return NextResponse.json({ error: "API key is not active." }, { status: 401 });
-    }
-
-    const incomingHash = await hashApiKeySecret(parsedKey.secret);
-
-    if (!safeEqual(incomingHash, apiKeyData.secretHash)) {
-      return NextResponse.json({ error: "API key is not active." }, { status: 401 });
+    if (!apiKeyRef) {
+      return inactiveApiKeyResponse();
     }
 
     const userRef = db.doc(`users/${parsedKey.userId}`);
@@ -131,12 +82,6 @@ export async function GET(request: NextRequest) {
       })
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Export failed.";
-
-    if (message.includes("Firebase Admin credentials")) {
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-
-    return NextResponse.json({ error: "Export failed." }, { status: 500 });
+    return apiErrorResponse(error, "Export failed.");
   }
 }
