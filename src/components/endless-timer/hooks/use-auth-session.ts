@@ -10,19 +10,14 @@ import {
 } from "firebase/auth";
 
 import { bootstrapUser } from "@/lib/firestore";
-import { getAuthResourceTimings, logClientEvent } from "@/lib/client-logs";
+import {
+  getAuthResourceTimings,
+  getErrorCode,
+  isDisplayModeStandalone,
+  logClientEvent
+} from "@/lib/client-logs";
 import { auth, googleProvider, prewarmPopupResolver } from "@/lib/firebase";
 import { getErrorMessage, type SetBusy, type SetError } from "@/components/endless-timer/hooks/shared";
-
-function isDisplayModeStandalone() {
-  if (typeof window === "undefined") return false;
-
-  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-  return (
-    window.matchMedia?.("(display-mode: standalone)").matches === true ||
-    navigatorWithStandalone.standalone === true
-  );
-}
 
 const PREWARM_TIMEOUT_MS = 5000;
 
@@ -111,6 +106,7 @@ export function useAuthSession(setBusy: SetBusy, setErrorMessage: SetError) {
       setBusy("sign-in");
       await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
     } catch (error) {
+      logClientEvent("sign-in-failed", { code: getErrorCode(error) });
       setErrorMessage(getErrorMessage(error, "Sign-in failed."));
     } finally {
       setBusy(null);

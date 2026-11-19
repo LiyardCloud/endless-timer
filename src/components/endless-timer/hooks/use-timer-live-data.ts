@@ -5,7 +5,7 @@ import type { User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 
 import { actionsQuery, getHistoryRangeBoundaries, historyRangeQuery, saveCurrentTitle } from "@/lib/firestore";
-import { logClientEvent } from "@/lib/client-logs";
+import { getSnapshotMetaDetails, logClientEvent } from "@/lib/client-logs";
 import { db } from "@/lib/firebase";
 import { normalizeActionIconName } from "@/lib/action-icons";
 import { mapAction, mapHistory } from "@/lib/firestore-mappers";
@@ -96,8 +96,13 @@ export function useTimerLiveData(
     setUserSnapshotLoaded(false);
     setActionsSnapshotLoaded(false);
 
+    let userStateLogged = false;
     const unsubscribeUser = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
       setUserSnapshotLoaded(true);
+      if (!userStateLogged) {
+        userStateLogged = true;
+        logClientEvent("user-state-loaded", { exists: snapshot.exists(), ...getSnapshotMetaDetails(snapshot) });
+      }
       const data = snapshot.data() as UserRecord | undefined;
 
       if (!data) {
@@ -129,7 +134,7 @@ export function useTimerLiveData(
       setActionsSnapshotLoaded(true);
       if (activitiesLoadedForUserRef.current !== user.uid) {
         activitiesLoadedForUserRef.current = user.uid;
-        logClientEvent("activities-loaded", { count: snapshot.size });
+        logClientEvent("activities-loaded", { count: snapshot.size, ...getSnapshotMetaDetails(snapshot) });
       }
     });
 

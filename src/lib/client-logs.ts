@@ -1,80 +1,28 @@
-const STORAGE_KEY = "endless-timer-client-logs-v1";
-const MAX_ENTRIES = 200;
+// Client diagnostics entry point. Importing this module starts launch logging.
 
-type ClientLogPrimitive = boolean | number | string | null | undefined;
-type ClientLogDetails = Record<string, ClientLogPrimitive | Array<Record<string, ClientLogPrimitive>>>;
+import { startLaunchDiagnostics } from "@/lib/client-log-launch";
+import {
+  getBuildInfo,
+  isBrowser,
+  launchId,
+  logClientEvent,
+  readEntries,
+  type ClientLogEntry
+} from "@/lib/client-log-store";
+
+export { isDisplayModeStandalone } from "@/lib/client-log-launch";
+export {
+  getErrorCode,
+  logClientEvent,
+  logClientEventOnce,
+  type ClientLogEntry
+} from "@/lib/client-log-store";
 
 export type ResourceTimingLog = {
   name: string;
   startTime: number;
   duration: number;
 };
-
-export type ClientLogEntry = {
-  event: string;
-  timestamp: string;
-  navigationElapsedMs: number;
-  page: string;
-  details: ClientLogDetails;
-};
-
-function isBrowser() {
-  return typeof window !== "undefined";
-}
-
-function readEntries(): ClientLogEntry[] {
-  if (!isBrowser()) return [];
-
-  try {
-    const value = window.sessionStorage.getItem(STORAGE_KEY);
-    const parsed = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveEntries(entries: ClientLogEntry[]) {
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(-MAX_ENTRIES)));
-  } catch {
-    // Logging must not affect the application if browser storage is unavailable.
-  }
-}
-
-export function logClientEvent(event: string, details: ClientLogDetails = {}) {
-  if (!isBrowser()) return;
-
-  const entry: ClientLogEntry = {
-    event,
-    timestamp: new Date().toISOString(),
-    navigationElapsedMs: Math.round(performance.now()),
-    page: window.location.pathname,
-    details
-  };
-
-  const entries = readEntries();
-  entries.push(entry);
-  saveEntries(entries);
-  console.info("[client-log]", entry);
-}
-
-export function recordPageLoadStart() {
-  if (!isBrowser()) return;
-
-  const entry: ClientLogEntry = {
-    event: "page-load-start",
-    timestamp: new Date(performance.timeOrigin).toISOString(),
-    navigationElapsedMs: 0,
-    page: window.location.pathname,
-    details: {}
-  };
-
-  const entries = readEntries();
-  entries.push(entry);
-  saveEntries(entries);
-  console.info("[client-log]", entry);
-}
 
 const AUTH_RESOURCE_HOSTS = [
   "apis.google.com",
@@ -112,11 +60,46 @@ export function getAuthResourceTimings(authDomain?: string): ResourceTimingLog[]
   return timings;
 }
 
+/** Firestore snapshot metadata for logs: whether data came from the local cache / unsynced writes. */
+export function getSnapshotMetaDetails(snapshot: {
+  metadata: { fromCache: boolean; hasPendingWrites: boolean };
+}) {
+  return {
+    fromCache: snapshot.metadata.fromCache,
+    hasPendingWrites: snapshot.metadata.hasPendingWrites
+  };
+}
+
+function groupByLaunch(entries: ClientLogEntry[]) {
+  const launches = new Map<string, ClientLogEntry[]>();
+  for (const entry of entries) {
+    const key = entry.launchId ?? "unknown";
+    const group = launches.get(key);
+    if (group) group.push(entry);
+    else launches.set(key, [entry]);
+  }
+
+  return [...launches.entries()].map(([id, launchEntries]) => {
+    const start = launchEntries.find((entry) => entry.event === "page-load-start");
+    return {
+      launchId: id,
+      startedAt: (start ?? launchEntries[0]).timestamp,
+      buildVersion: start?.details.buildVersion ?? null,
+      entries: launchEntries
+    };
+  });
+}
+
 export function downloadClientLogs() {
   if (!isBrowser()) return;
 
   logClientEvent("logs-exported");
-  const data = { exportedAt: new Date().toISOString(), entries: readEntries() };
+  const data = {
+    exportedAt: new Date().toISOString(),
+    build: getBuildInfo(),
+    currentLaunchId: launchId,
+    launches: groupByLaunch(readEntries())
+  };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -127,5 +110,5 @@ export function downloadClientLogs() {
   URL.revokeObjectURL(url);
 }
 
-recordPageLoadStart();
+startLaunchDiagnostics();
 logClientEvent("client-logger-ready");
