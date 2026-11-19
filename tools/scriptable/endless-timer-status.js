@@ -120,7 +120,7 @@ function buildWidget(state, family) {
     title.font = Font.semiboldSystemFont(15);
     title.lineLimit = 1;
     if (current && current.actionId) {
-      addTimer(widget, current.startedAt, Font.monospacedDigitSystemFont(15, 600));
+      addTimer(widget, current.startedAt, Font.semiboldMonospacedSystemFont(15));
     }
     if (state.stale) {
       const note = widget.addText(state.error ? `⚠︎ ${state.error}` : "⚠︎ offline");
@@ -148,7 +148,7 @@ function buildWidget(state, family) {
 
   if (current && current.actionId) {
     const timerStack = widget.addStack();
-    addTimer(timerStack, current.startedAt, Font.monospacedDigitSystemFont(22, 600));
+    addTimer(timerStack, current.startedAt, Font.semiboldMonospacedSystemFont(22));
     timerStack.addSpacer();
   }
 
