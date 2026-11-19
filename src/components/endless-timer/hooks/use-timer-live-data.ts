@@ -97,6 +97,7 @@ export function useTimerLiveData(
     setActionsSnapshotLoaded(false);
 
     let userStateLogged = false;
+    let lastHistoryEventId: string | null | undefined;
     const unsubscribeUser = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
       setUserSnapshotLoaded(true);
       if (!userStateLogged) {
@@ -121,9 +122,15 @@ export function useTimerLiveData(
         currentStartedAt: data.currentStartedAt ?? null
       };
 
+      // An activity switch made outside this tab (e.g. via /api/activity/switch) starts a new history
+      // event with an empty title; drop the stale draft so it is not saved onto the new activity.
+      const historyEventChanged =
+        lastHistoryEventId !== undefined && nextState.currentHistoryEventId !== lastHistoryEventId;
+      lastHistoryEventId = nextState.currentHistoryEventId ?? null;
+
       setCurrentState(nextState);
 
-      if (!hydratedTitleRef.current || busyRef.current === "select-action") {
+      if (!hydratedTitleRef.current || busyRef.current === "select-action" || historyEventChanged) {
         setTitleDraft(nextState.currentTitle);
         hydratedTitleRef.current = true;
       }
